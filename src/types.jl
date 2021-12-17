@@ -1,6 +1,14 @@
 """
 QQQQ
 """
+mutable struct PHDist
+    α::Adjoint{Float64, Vector{Float64}}
+    T::Matrix{Float64}
+end
+
+"""
+QQQQ
+"""
 mutable struct MAPHDist
     α::Adjoint{Float64, Vector{Float64}}
     T::Matrix{Float64}
@@ -35,6 +43,13 @@ MAPHObsData = Vector{SingleObs}
 /(ss::MAPHSufficientStats,n::Real) = MAPHSufficientStats(ss.B/n,ss.Z/n,ss.N/n)
 /(ss1::MAPHSufficientStats,ss2::MAPHSufficientStats) = MAPHSufficientStats(ss1.B ./ ss2.B, ss1.Z ./  ss2.Z, ss1.N ./  ss2.N)
 -(ss1::MAPHSufficientStats, ss2::MAPHSufficientStats) = MAPHSufficientStats(ss1.B-ss2.B, ss1.Z-ss2.Z, ss1.N - ss2.N)
+
+"""
+QQQQ - put doc string
+"""
+model_size(ph::PHDist) = length(ph.α)
+
+
 
 """
 QQQQ - put doc string

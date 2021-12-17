@@ -38,10 +38,10 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
     dist = []
     for k = 1:q
         if sorted_scvs[k]≥1
-            push!(dist,hyper_exp_fit(sorted_means[k],sorted_scvs[k]))
+            push!(dist,hyper_exp_init(sorted_means[k],sorted_scvs[k]))
         end
         if sorted_scvs[k]<1
-            push!(dist,hypo_exp_fit(sorted_means[k],sorted_scvs[k]))
+            push!(dist,hypo_exp_init(sorted_means[k],sorted_scvs[k]))
         end
     end
 

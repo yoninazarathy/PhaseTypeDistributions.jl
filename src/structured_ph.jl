@@ -3,7 +3,7 @@
 Returns parameters of a two phase hyper-exponential fitting a mean and an SCV.
 
 """
-function hyper_exp_fit(mean::Float64, scv::Float64)
+function hyper_exp_init(mean::Float64, scv::Float64)::PHDist
     scv < 1.0 && error("SCV must be greater than 1")
     μ1 = 1/(scv+1)
     p = (scv-1)/(scv+1+2/μ1^2-4/μ1)
@@ -14,9 +14,9 @@ function hyper_exp_fit(mean::Float64, scv::Float64)
 
     T = zeros(2,2)
     T[1,1] = -1/μ1
-    T[2,2] = -(1-p)/(1-2*p)
+    T[2,2] = -(1-p)/(1-2*p)/μ1
 
-    return (α, (1/mean)*T)
+    return PHDist(α, (1/mean)*T)
 end
 
  
@@ -26,8 +26,7 @@ end
 Returns parameters of a hypo-exponential (generalized erlang) dist which is a sum of n exponentials with the last one different
 
 """
-
-function hypo_exp_fit(mean::Float64,scv::Float64)
+function hypo_exp_init(mean::Float64,scv::Float64)::PHDist
 
     scv ≥ 1.0 && error("SCV must be less than 1")
 
@@ -49,7 +48,6 @@ function hypo_exp_fit(mean::Float64,scv::Float64)
 
     T[n,n] = -ν2
 
-    return (α, (1/mean)*T) 
-
+    return PHDist(α, (1/mean)*T) 
 end
 
