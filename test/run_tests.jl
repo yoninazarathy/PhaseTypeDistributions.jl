@@ -10,12 +10,13 @@ include("test_maph_sufficient_stats.jl")
 include("test_structured_ph.jl")
 include("test_maph_basic.jl")
 
-@test hypoexp_test()
-@test hyperexp_test()
+@test test_hypoexp()
+@test test_hyperexp()
 @test test_maph_moments_and_rand()
+@test test_maph_init()
 
 ############################
-## Playground area here....
+## Playground area here....``
 
 # test_init()
 
