@@ -8,10 +8,10 @@ function hypoexp_test()
 end
 
 function hyperexp_test()
-    mean_desired = 1.0
-    scv_desired = 1.0
+    mean_desired = 1.2
+    scv_desired = 1.5
     d = hyper_exp_init(mean_desired, scv_desired)
-    @show mean(d)
+    @show mean(d),scv(d)
     # (mean_desired ≈ mean(d)) || return false 
     # (scv_desired ≈ scv(d)) || return false #QQQQ
     return true
