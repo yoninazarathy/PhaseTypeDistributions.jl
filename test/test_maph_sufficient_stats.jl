@@ -35,7 +35,7 @@ end
 """
 Test the sufficient stats with full trace data
 """
-function test_full_trace_sufficient_stats()
+function full_trace_sufficient_stats_test()
     Λ₄, λ45, λ54, Λ₅ = 5, 2, 7, 10
     μ41, μ42, μ43, μ51, μ52, μ53 = 1, 1, 1, 1, 1, 1 
     T_example = [-Λ₄ λ45; λ54 -Λ₅]
@@ -44,17 +44,6 @@ function test_full_trace_sufficient_stats()
     maph = MAPHDist([0.5,0.5]',T_example, T0_example)
 
     p,q = model_size(maph)
-    # @show maph
-    # @show model_size(maph)
-    # update_sufficient_stats(maph, data,stats)
-
-    # @show stats
-
-    # QQQQ update_sufficient_stats(maph,data,stats)
-
-
-    @show mean(maph)
-
     test_stats = MAPHSufficientStats(maph)
 
 
