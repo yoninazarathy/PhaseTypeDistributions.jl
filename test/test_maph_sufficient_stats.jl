@@ -35,7 +35,7 @@ end
 """
 Test the sufficient stats with full trace data
 """
-function full_trace_sufficient_stats_test()
+function full_trace_sufficient_stats_test(;N=10^4)
     Λ₄, λ45, λ54, Λ₅ = 5, 2, 7, 10
     μ41, μ42, μ43, μ51, μ52, μ53 = 1, 1, 1, 1, 1, 1 
     T_example = [-Λ₄ λ45; λ54 -Λ₅]
@@ -47,7 +47,7 @@ function full_trace_sufficient_stats_test()
     test_stats = MAPHSufficientStats(maph)
 
 
-    for _ in 1:10^5
+    for _ in 1:N
         times, states = rand(maph, full_trace = true) 
         ss = sufficient_stat_from_trajectory(maph, times, states)
         test_stats.N += ss.N
@@ -66,11 +66,6 @@ function full_trace_sufficient_stats_test()
     computered_intensity = (test_stats.N.*(1 ./ test_stats.Z))
 
     @show computered_intensity
-
-
-
-    
-    
 
     # @show(stats.N,test_stats.N)
     return true
