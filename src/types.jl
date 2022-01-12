@@ -56,4 +56,10 @@ QQQQ - put doc string
 """
 model_size(maph::MAPHDist) = (p = size(maph.T,1), q = size(maph.T0,2)) #transient is p and abosrbing is q
 
-
+"""
+QQQQ
+"""
+function non_degenerate_maph(maph::MAPHDist)::MAPHDist
+    valid_states = abs.(diag(maph.T)) .> sqrt(eps())
+    return MAPHDist(maph.α[valid_states]', maph.T[valid_states,valid_states], maph.T0[valid_states,:])
+end
