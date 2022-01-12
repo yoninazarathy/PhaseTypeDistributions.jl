@@ -2,6 +2,7 @@
 using Test
 using Pkg
 Pkg.activate((@__DIR__) * "/..")
+
 include("../src/PhaseTypeDistributions.jl")
 
 include("test_maph_fit.jl")
@@ -12,10 +13,12 @@ include("test_maph_basic.jl")
 
 @test hypoexp_test()
 @test hyperexp_test()
-@test test_maph_moments_and_rand()
-
+@test maph_moments_and_rand_test()
+@test init_test()
+@test test_full_trace_sufficient_stats()
 ############################
 ## Playground area here....
+
 
 # test_init()
 

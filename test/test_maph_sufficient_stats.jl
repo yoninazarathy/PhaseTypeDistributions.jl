@@ -15,7 +15,7 @@ end
 
 
 """
-QQQQ
+Returns an array of data filtered according to the sojourn time being less than the index of the time array.
 """
 function time_filter_data(data, n::Int64)
 
@@ -33,27 +33,30 @@ function time_filter_data(data, n::Int64)
 end
 
 """
-QQQQ
+Test the sufficient stats with full trace data
 """
-function sufficient_stats_test1()
+function test_full_trace_sufficient_stats()
     Λ₄, λ45, λ54, Λ₅ = 5, 2, 7, 10
     μ41, μ42, μ43, μ51, μ52, μ53 = 1, 1, 1, 1, 1, 1 
     T_example = [-Λ₄ λ45; λ54 -Λ₅]
     T0_example = [μ41 μ42 μ43; μ51 μ52 μ53]
 
     maph = MAPHDist([0.5,0.5]',T_example, T0_example)
-    stats = MAPHSufficientStats(maph)
+
+    p,q = model_size(maph)
     # @show maph
     # @show model_size(maph)
-
-    data = [(y=2.3,a=2),(y=5.32,a=1),(y=15.32,a=2)]
     # update_sufficient_stats(maph, data,stats)
 
     # @show stats
 
     # QQQQ update_sufficient_stats(maph,data,stats)
 
+
+    @show mean(maph)
+
     test_stats = MAPHSufficientStats(maph)
+
 
     for _ in 1:10^5
         times, states = rand(maph, full_trace = true) 
@@ -67,8 +70,21 @@ function sufficient_stats_test1()
     test_stats.Z = test_stats.Z/sum(test_stats.Z)
     test_stats.N = test_stats.N/sum(test_stats.N)
 
+    test_α = test_stats.B
+
+    @show test_stats.Z
+
+    computered_intensity = (test_stats.N.*(1 ./ test_stats.Z))
+
+    @show computered_intensity
+
+
+
+    
+    
+
     # @show(stats.N,test_stats.N)
-    @show test_stats
+    return true
 end
 
 
@@ -134,10 +150,6 @@ function sufficient_stats_test2()
     
     return dist
 
-    # @show first(data)
-    # # @show m[1]
-    # @show maximum(data.y)
-    # @show maximum[data[i].y for i = 1:length(data)]
 end
 
 

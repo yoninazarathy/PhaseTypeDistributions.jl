@@ -9,15 +9,14 @@ function hyper_exp_init(mean::Float64, scv::Float64)::PHDist
     p = (scv-1)/(scv+1+2/(μ1^2)-4/μ1)
     μ2 = (1-p)/(1-p/μ1)
     α = zeros(2)'
-    α[1] = 1-p
-    α[2] = p
+    α[1] = p
+    α[2] = 1-p
 
     T = zeros(2,2)
     T[1,1] = -1/μ1
     T[2,2] = -1/μ2
-    @show p/μ1+(1-p)/μ2,μ1,μ2
-
-    return PHDist(α, (1/mean).*T)
+    # @show p/μ1+(1-p)/μ2,μ1,μ2,m1, 2*(1-μ1)/(2-μ1*(scv+1)), -α*(mean)*T*ones(2,1)
+    return PHDist(α, (1/mean)*T^(-1))
 end
 
  

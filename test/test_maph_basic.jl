@@ -1,4 +1,4 @@
-function test_maph_moments_and_rand()
+function maph_moments_and_rand_test()
     #QQQQ create an MAPH Distributions
     Λ₄, λ45, λ54, Λ₅ = 5, 2, 7, 10
     μ41, μ42, μ43, μ51, μ52, μ53 = 1, 1, 1, 1, 1, 1 
