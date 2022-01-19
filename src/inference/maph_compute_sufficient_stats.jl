@@ -8,11 +8,11 @@ function poi_bound(λ, ε)
     K = 0
     pdf = (λ^K/factorial(K))*exp(-λ)
 
-    while cdf < 1-ε
+    while pdf < 1-ε
         K += 1
         pdf += (λ^K/factorial(K))*exp(-λ)
     end
-    
+
     return K
 
 end
@@ -25,38 +25,36 @@ end
 
 
 
-function uniformizaition_integral(y::Float64, v1, v2, maph::MAPHDist)
+function uniformizaition_integral(y::Float64, row_vec, col_vec, maph::MAPHDist)
     r = maximum(abs.(diag(maph.T)))
     P = I + maph.T./r
     R = poi_bound(r*y,0.1)
+    
 
+    column_vecs = zeros(length(col_vec),R)
 
-    column_vs = zeros(length(v1),R)
-
-    column_vs[:,1] = v1
+    column_vecs[:,1] = col_vec
     for i = 2:R
-        column_vs[:,i] = P*column_vs[:,i-1]
+        column_vecs[:,i] = P*column_vecs[:,i-1]
     end
 
-    row_vs = zeros(R,length(v2))
-    row_vs[1,:] = (poi_prob(R+1,r*y)*v2)'
+    row_vecs = zeros(R,length(row_vec))
+    row_vecs[1,:] = (poi_prob(R+1,r*y)*row_vec)
 
     for i = 2:R
-        row_vs[i,:] = row_vs[i-1,:]'*P + poi_prob(i+1,r*y)*v2
+        row_vecs[i,:] = row_vecs[i-1,:]'*P + poi_prob(i+1,r*y)*row_vec
     end
 
-    row_v = reverse(row_v)
+    row_vecs = row_vecs[end:-1:1,1:1:end]
     integral = 0
     for i = 1:R
-        intergral += column_v[i]*row_v[i]/r
+        integral += row_vecs[i,:]'*column_vecs[:,i]/r
     end
 
     return integral
 end
 
 
-# function uniformizaition_solver(y::Float64,i::Int,j::Int,maph::MAPHDist)
-#     return uniformizaition_integral(y, )
 
 
 
