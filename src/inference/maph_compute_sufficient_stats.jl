@@ -4,6 +4,62 @@ function very_crude_c_solver(y::Float64,i::Int,j::Int,maph::MAPHDist)
     quadgk(u -> (maph.α*exp(maph.T*u))[i]*exp(maph.T*(y-u))*maph.T0[:,j] , 0, y, rtol=1e-8) |> first
 end
 
+function poi_bound(λ, ε)
+    K = 0
+    pdf = (λ^K/factorial(K))*exp(-λ)
+
+    while cdf < 1-ε
+        K += 1
+        pdf += (λ^K/factorial(K))*exp(-λ)
+    end
+    
+    return K
+
+end
+
+function poi_prob(k, λ)
+
+    return (λ^k/factorial(k))*exp(-λ)
+
+end
+
+
+
+function uniformizaition_integral(y::Float64, v1, v2, maph::MAPHDist)
+    r = maximum(abs.(diag(maph.T)))
+    P = I + maph.T./r
+    R = poi_bound(r*y,0.1)
+
+
+    column_vs = zeros(length(v1),R)
+
+    column_vs[:,1] = v1
+    for i = 2:R
+        column_vs[:,i] = P*column_vs[:,i-1]
+    end
+
+    row_vs = zeros(R,length(v2))
+    row_vs[1,:] = (poi_prob(R+1,r*y)*v2)'
+
+    for i = 2:R
+        row_vs[i,:] = row_vs[i-1,:]'*P + poi_prob(i+1,r*y)*v2
+    end
+
+    row_v = reverse(row_v)
+    integral = 0
+    for i = 1:R
+        intergral += column_v[i]*row_v[i]/r
+    end
+
+    return integral
+end
+
+
+# function uniformizaition_solver(y::Float64,i::Int,j::Int,maph::MAPHDist)
+#     return uniformizaition_integral(y, )
+
+
+
 function sufficient_stats(observation::SingleObs, maph::MAPHDist; c_solver = very_crude_c_solver)::MAPHSufficientStats
     stats = MAPHSufficientStats(maph)
 

@@ -75,31 +75,30 @@ end
 """
 QQQQ
 """
-function sufficient_stats_test2()
+function sufficient_stats_test(;timesteps = 10^3)
     Λ₄, λ45, λ54, Λ₅ = 5, 2, 7, 10
     μ41, μ42, μ43, μ51, μ52, μ53 = 1, 1, 1, 1, 1, 1 
     T_example = [-Λ₄ λ45; λ54 -Λ₅]
     T0_example = [μ41 μ42 μ43; μ51 μ52 μ53]
+    initial_dist = [0.5,0.5]
 
-    maph = MAPHDist([0.5,0.5]', T_example, T0_example)
+    maph = MAPHDist(initial_dist', T_example, T0_example)
    
     data = []
     full_trace =[]
     
-    println("starting generating data")
-    for i in 1:2*10^4
+    for i in 1:10^6
         times, states = rand(maph, full_trace = true) 
         push!(full_trace, (times,states))
         push!(data, (observation_from_full_traj(times,states),i))
-        i % 10^5 == 0 && print(".")
+        i % 10^6 == 0 && print(".")
     end
-    println("\nfinished generating data")
 
     absorb = absorb_filter_data(data, maph)
-    time_bin = time_filter_data(absorb[1], 1000)
+    time_bin = time_filter_data(absorb[1], timesteps)
 
     #loop over all bins
-    println("\n start initialization...")
+    # println("\n start initialization...")
     for i in 1:length(time_bin)
         ss_i = MAPHSufficientStats[]
         for trace in full_trace[last.(time_bin[i])]
@@ -111,28 +110,35 @@ function sufficient_stats_test2()
             mean_observed_ss = mean(ss_i)
             obs = first(data[last(last.(time_bin[i]))])
             computed_ss = sufficient_stats(obs, maph)
-            errs_N = (mean_observed_ss.N - computed_ss.N) ./ computed_ss.N #./ computed_ss
+            @show computed_ss.N, mean_observed_ss.N
+
+            errs_N = (mean_observed_ss.N - computed_ss.N)#./ computed_ss
+
+
+            computed_ss.B ≈ initial_dist || return false
+
+            # @show computed_ss.Z, mean_observed_ss.Z
             # @show obs
             # sufficient_stats()
         end
     end
     
-    ab1 = filter(x->x.a==1,first.(data))
-    ab2 = filter(x->x.a==2,first.(data))
-    ab3 = filter(x->x.a==3,first.(data))
+    # ab1 = filter(x->x.a==1,first.(data))
+    # ab2 = filter(x->x.a==2,first.(data))
+    # ab3 = filter(x->x.a==3,first.(data))
     
-    probs = [length(ab1),length(ab2),length(ab3)]./length(data)
-    means = [mean(first.(ab1)),mean(first.(ab2)),mean(first.(ab3))]
-    scvs = [scv(first.(ab1)),scv(first.(ab2)),scv(first.(ab3))]
+    # probs = [length(ab1),length(ab2),length(ab3)]./length(data)
+    # means = [mean(first.(ab1)),mean(first.(ab2)),mean(first.(ab3))]
+    # scvs = [scv(first.(ab1)),scv(first.(ab2)),scv(first.(ab3))]
 
-    dist = MAPHDist(10,probs,means,scvs)
-    println("finish initialization")
+    # dist = MAPHDist(10,probs,means,scvs)
+    # println("finish initialization")
 
-    println("starting simulations")
-    fit!(dist,first.(data))
-    println("\nfinished simulations")
+    # println("starting simulations")
+    # fit!(dist,first.(data))
+    # println("\nfinished simulations")
     
-    return dist
+    return true
 
 end
 

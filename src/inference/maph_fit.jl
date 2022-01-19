@@ -12,6 +12,7 @@ function sufficient_stat_from_trajectory(d::MAPHDist, sojourn_times::Array{Float
 
     ss =  MAPHSufficientStats(d)
 
+
     for s = 1:p
         if states[1] == transient_states[s]
             ss.B[s] +=1
@@ -57,7 +58,6 @@ function fit!(maph::MAPHDist,data::MAPHObsData)::MAPHDist
         end
         ss = ss/10^2
                 maph = stats_to_dist(maph,ss)
-
     end
 
     return maph
