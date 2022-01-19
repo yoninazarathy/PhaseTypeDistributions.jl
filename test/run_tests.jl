@@ -15,7 +15,16 @@ include("test_maph_basic.jl")
 # @test hyperexp_test()
 # @test maph_moments_and_rand_test()
 # @test maph_init_test()
-@test full_trace_sufficient_stats_test()
+# @test full_trace_sufficient_stats_test()
+#@test sufficient_stats_test()
+
+using Plots
+N_e, Z_e, time_vec = sufficient_stats_test()
+p1 = scatter(time_vec, N_e, xlabel = "Absorbtion time", label="N errors")
+p2 = scatter(time_vec, Z_e, xlabel = "Absorbtion time", label="Z errors")
+plot(p1,p2)
+
+
 ############################
 ## Playground area here....``
 

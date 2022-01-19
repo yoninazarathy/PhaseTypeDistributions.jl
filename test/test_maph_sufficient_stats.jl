@@ -7,8 +7,11 @@ function absorb_filter_data(data, maph::MAPHDist)
 
     for i = 1:q
         temp_data = filter(data) do obs first(obs).a == i end
-        push!(filter_data,temp_data)
+        push!(filter_data, temp_data)
     end    
+
+    #QQQQ this whole function can be just this one line ??
+    # [filter((obs)->first(obs).a == i, data) for i in 1:q]
     
     return filter_data
 end
@@ -19,17 +22,21 @@ Returns an array of data filtered according to the sojourn time being less than 
 """
 function time_filter_data(data, n::Int64)
 
-    max_time = maximum(((d)->first(d).y).(data) )#[data[i].y for i = 1:length(data)])
-    time_vec = Array(LinRange(0, max_time, n)) #QQQQ - cleanup later
+    times = ((d)->first(d).y).(data)
+    min_time = quantile(times, 0.1)
+    max_time = quantile(times, 0.9)
+    @show min_time, max_time
+    time_vec = Array(LinRange(min_time, max_time, n)) #QQQQ - cleanup later
 
     filter_data = []
 
     for i = 1:(n-1)
         temp_data = filter(data) do obs first(obs).y ≥ time_vec[i] && first(obs).y < time_vec[i+1] end 
         push!(filter_data,temp_data)
+        @show length(temp_data)
     end    
 
-    return(filter_data)
+    return filter_data, time_vec
 end
 
 """
@@ -75,7 +82,11 @@ end
 """
 QQQQ
 """
-function sufficient_stats_test(;timesteps = 10^3)
+function sufficient_stats_test(; sim_runs = 10^6)
+
+    #Set heuristically the number of times steps to be the sqrt of the number of runs
+    timesteps = round(Int,sqrt(sim_runs))
+
     Λ₄, λ45, λ54, Λ₅ = 5, 2, 7, 10
     μ41, μ42, μ43, μ51, μ52, μ53 = 1, 1, 1, 1, 1, 1 
     T_example = [-Λ₄ λ45; λ54 -Λ₅]
@@ -87,18 +98,26 @@ function sufficient_stats_test(;timesteps = 10^3)
     data = []
     full_trace =[]
     
-    for i in 1:10^6
+    @showprogress "Simulating data" for i in 1:sim_runs
         times, states = rand(maph, full_trace = true) 
         push!(full_trace, (times,states))
         push!(data, (observation_from_full_traj(times,states),i))
-        i % 10^6 == 0 && print(".")
+        # i % 10^6 == 0 && print(".")
     end
 
     absorb = absorb_filter_data(data, maph)
-    time_bin = time_filter_data(absorb[1], timesteps)
+
+    #QQQQ this is for now just looking at trajectory observed in first state
+    time_bin, time_vec = time_filter_data(absorb[2], timesteps)
+
+    @show time_vec
+
+    Z_errors = Float64[]
+    N_errors = Float64[]
 
     #loop over all bins
     # println("\n start initialization...")
+    # @showprogress "Checking sufficient stats" 
     for i in 1:length(time_bin)
         ss_i = MAPHSufficientStats[]
         for trace in full_trace[last.(time_bin[i])]
@@ -108,21 +127,27 @@ function sufficient_stats_test(;timesteps = 10^3)
         
         if !isempty(ss_i)
             mean_observed_ss = mean(ss_i)
+            time_slice = first(data[last(last.(time_bin[i]))])[1]
+            @show time_slice
             obs = first(data[last(last.(time_bin[i]))])
             computed_ss = sufficient_stats(obs, maph)
-            @show computed_ss.N, mean_observed_ss.N
+            # @show computed_ss.N, mean_observed_ss.N
 
             errs_N = (mean_observed_ss.N - computed_ss.N)#./ computed_ss
+            push!(N_errors, norm(mean_observed_ss.N - computed_ss.N)/time_slice)
 
-
-            computed_ss.B ≈ initial_dist || return false
+            # computed_ss.B ≈ initial_dist || return false
 
             # @show computed_ss.Z, mean_observed_ss.Z
+            push!(Z_errors, norm(mean_observed_ss.Z - computed_ss.Z)/time_slice)
+
             # @show obs
             # sufficient_stats()
         end
     end
     
+    return N_errors, Z_errors, time_vec
+
     # ab1 = filter(x->x.a==1,first.(data))
     # ab2 = filter(x->x.a==2,first.(data))
     # ab3 = filter(x->x.a==3,first.(data))

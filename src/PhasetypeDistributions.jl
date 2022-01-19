@@ -1,4 +1,4 @@
-using LinearAlgebra, QuadGK, StatsBase, Distributions, Statistics
+using LinearAlgebra, QuadGK, StatsBase, Distributions, Statistics, ProgressMeter
 import Base: rand, +, /, -
 import Distributions: cdf, ccdf, mean, var
 
