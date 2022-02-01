@@ -1,8 +1,14 @@
 
 #temp
-function very_crude_c_solver(y::Float64,i::Int,j::Int,maph::MAPHDist)
-    quadgk(u -> (maph.α*exp(maph.T*u))[i]*exp(maph.T*(y-u))*maph.T0[:,j] , 0, y, rtol=1e-8) |> first
+
+
+
+function very_crude_c_solver(y::Float64,i::Int,j::Int,k::Int,maph::MAPHDist)
+    quadgk(u -> (maph.α*exp(maph.T*u))[i]*(exp(maph.T*(y-u))*maph.T0[:,j])[k] , 0, y, rtol=1e-8) |> first
 end
+
+
+
 
 function poi_bound(λ, ε)
     K = 0
@@ -65,7 +71,8 @@ function sufficient_stats(observation::SingleObs, maph::MAPHDist; c_solver = ver
 
     a(y::Float64) = maph.α*exp(maph.T*y)
     b(y::Float64,j::Int) = exp(maph.T*y)*maph.T0[:,j]
-    c(y::Float64,i::Int,j::Int) = very_crude_c_solver(y,i,j,maph)
+    c(y::Float64,i::Int,j::Int,k::Int) = very_crude_c_solver2(y,i,j,k,maph)
+
 
     D = Diagonal(maph.T)
     PT = I-inv(Diagonal(maph.T))*maph.T
@@ -74,16 +81,16 @@ function sufficient_stats(observation::SingleObs, maph::MAPHDist; c_solver = ver
     PA = maph.α*A
 
     EB(y::Float64, i::Int, j::Int) = maph.α[i] * b(y,j)[i]*PA[j]/ (maph.α*b(y,j))
-    EZ(y::Float64, i::Int, j::Int) = c(y,i,j)[i]*PA[j]/(maph.α*b(y,j))
-    ENT(y::Float64,i::Int,k::Int,j::Int) = i !=k ? maph.T[i,:].*c(y,i,j)*PA[j]/(maph.α*b(y,j)) : zeros(p)
+    EZ(y::Float64, i::Int, j::Int,k::Int) = c(y,i,j,k)*PA[j]/(maph.α*b(y,j))
+    ENT(y::Float64,i::Int,j::Int,k::Int) = i !=k ? maph.T[i,:].*c(y,i,j,k)*PA[j]/(maph.α*b(y,j)) : zeros(p)
     ENA(y::Float64,i::Int,j::Int) = PA[j]*a(y)[i]*maph.T0[i,j]/(maph.α*b(y,j))
 
     stats.B = [sum([EB(observation.y, i, j) for j = 1:q]) for i =1:p]
-    stats.Z = [sum([EZ(observation.y,i,j) for j =1:q]) for i = 1:p]
+    stats.Z = [sum([EZ(observation.y,i,j,i) for j =1:q]) for i = 1:p]
 
     for i = 1:p
         for k = (q+1):(q+p)
-            V = sum([ENT(observation.y,i,k-q,j) for j in 1:q])
+            V = sum([ENT(observation.y,i,j,k-q) for j in 1:q])
             stats.N[i,k] = V[k-q]
         end
 
