@@ -71,7 +71,7 @@ function sufficient_stats(observation::SingleObs, maph::MAPHDist; c_solver = ver
 
     a(y::Float64) = maph.α*exp(maph.T*y)
     b(y::Float64,j::Int) = exp(maph.T*y)*maph.T0[:,j]
-    c(y::Float64,i::Int,j::Int,k::Int) = very_crude_c_solver2(y,i,j,k,maph)
+    c(y::Float64,i::Int,j::Int,k::Int) = very_crude_c_solver(y,i,j,k,maph)
 
 
     D = Diagonal(maph.T)

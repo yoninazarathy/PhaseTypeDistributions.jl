@@ -102,11 +102,11 @@ function sufficient_stats_test(; sim_runs = 10^6)
         times, states = rand(maph, full_trace = true) 
         push!(full_trace, (times,states))
         push!(data, (observation_from_full_traj(times,states),i))
-        # i % 10^6 == 0 && print(".")
     end
 
     absorb = absorb_filter_data(data, maph)
-
+    @show length(absorb)
+    
     #QQQQ this is for now just looking at trajectory observed in first state
     time_bin, time_vec = time_filter_data(absorb[2], timesteps)
 
@@ -134,7 +134,7 @@ function sufficient_stats_test(; sim_runs = 10^6)
             # @show computed_ss.N, mean_observed_ss.N
 
             errs_N = (mean_observed_ss.N - computed_ss.N)#./ computed_ss
-            push!(N_errors, norm(mean_observed_ss.N - computed_ss.N)/time_slice)
+            push!(N_errors, norm(mean_observed_ss.N[:,1:3] - computed_ss.N[:,1:3])/time_slice)
 
             # computed_ss.B ≈ initial_dist || return false
 
@@ -196,4 +196,31 @@ function sufficient_stats_test3()
 
     obs = (y=100.0, a=2)
     sufficient_stats(obs, maph)
+end
+
+"""
+QQQQ - this is probably temporary.
+"""
+function analyze_ss_with_plots()
+
+    Λ₄, λ45, λ54, Λ₅ = 5, 2, 7, 10
+    μ41, μ42, μ43, μ51, μ52, μ53 = 1, 1, 1, 1, 1, 1 
+    T_example = [-Λ₄ λ45; λ54 -Λ₅]
+    T0_example = [μ41 μ42 μ43; μ51 μ52 μ53]
+    initial_dist = [0.5,0.5]
+
+    maph = MAPHDist(initial_dist', T_example, T0_example)
+    @show maph
+
+    SingleObs = NamedTuple{(:y, :a), Tuple{Float64, Int64}}
+
+    for y in 0.5:0.5
+        obs = (y=y, a = 1)
+        ss = sufficient_stats(obs,maph)
+        ss.N[1,1] #this means the expected number of jumps from the first transient state  
+                        #to the first absorbing state (a=1) 
+        # @show ss.N
+        return ss.N
+    end
+
 end
