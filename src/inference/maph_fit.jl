@@ -42,6 +42,47 @@ function stats_to_dist(maph::MAPHDist,ss::MAPHSufficientStats)::MAPHDist
     return MAPHDist(α,T,T0)
 end
 
+
+"""
+Fits ... QQQQ
+"""
+function fit_maph(times::Vector{Float64}, absorbing_states::Vector{Int}, p::Int)
+    @assert length(times) == length(absorbing_states) "Vector of times and absorbing states mismatch in length"
+    unique_absorbing_states = unique(absorbing_states)
+    q = length(unique_absorbing_states)
+    @assert minimum(unique_absorbing_states) == 1 && maximum(unique_absorbing_states) == q  "Mismatch with absorbing states"
+    n = length(times)
+    print("Fitting MAPH with p=$p hidden states, q=$q absorbing states, and n=$n observations")
+
+    dist = MAPHDist(p, compute_descriptive_stats(times, absorbing_states)...)
+
+    #QQQQ - here have the fitting loop (here is the beef!)
+    #QQQQ - Zhihao continue during the week....
+    
+    return dist
+end
+
+"""
+Computes some descriptive statistics of a data sequence
+"""
+function compute_descriptive_stats(times::Vector{Float64}, abosrbing_states::Vector{Int})
+    #QQQQ - good to have a test function for this function (in tests)
+    @assert length(times) == length(abosrbing_states) "Vector of times and absorbing states mismatch in length"
+    unique_absorbing_states = unique(abosrbing_states)
+    q = length(unique_absorbing_states)
+    @assert minimum(unique_absorbing_states) == 1 && maximum(unique_absorbing_states) == q  "Mismatch with absorbing states"
+    n = length(times)
+
+    probs = [mean(abosrbing_states .== i) for i in 1:q]
+    means = [mean(times[abosrbing_states .== i]) for i in 1:q]
+    scvs = [var(times[abosrbing_states .== i]) for i in 1:q] ./ (means .^ 2)
+
+    @show probs
+
+    return probs, means, scvs
+end
+
+
 """
 Fits ... QQQQ
 """
