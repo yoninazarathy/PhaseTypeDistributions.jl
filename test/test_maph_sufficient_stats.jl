@@ -12,7 +12,6 @@ function absorb_filter_data(data, maph::MAPHDist)
 
     #QQQQ this whole function can be just this one line ??
     # [filter((obs)->first(obs).a == i, data) for i in 1:q]
-    
     return filter_data
 end
 
@@ -94,6 +93,8 @@ function sufficient_stats_test(; sim_runs = 10^6)
     initial_dist = [0.5,0.5]
 
     maph = MAPHDist(initial_dist', T_example, T0_example)
+
+    p,q = model_size(maph)
    
     data = []
     full_trace =[]
@@ -105,12 +106,10 @@ function sufficient_stats_test(; sim_runs = 10^6)
     end
 
     absorb = absorb_filter_data(data, maph)
-    @show length(absorb)
+    absorb_data = vcat(absorb[1],absorb[2],absorb[3])
     
     #QQQQ this is for now just looking at trajectory observed in first state
-    time_bin, time_vec = time_filter_data(absorb[2], timesteps)
-
-    @show time_vec
+    time_bin, time_vec = time_filter_data(absorb_data, timesteps)
 
     Z_errors = Float64[]
     N_errors = Float64[]
@@ -118,6 +117,8 @@ function sufficient_stats_test(; sim_runs = 10^6)
     #loop over all bins
     # println("\n start initialization...")
     # @showprogress "Checking sufficient stats" 
+
+
     for i in 1:length(time_bin)
         ss_i = MAPHSufficientStats[]
         for trace in full_trace[last.(time_bin[i])]
@@ -134,7 +135,7 @@ function sufficient_stats_test(; sim_runs = 10^6)
             # @show computed_ss.N, mean_observed_ss.N
 
             errs_N = (mean_observed_ss.N - computed_ss.N)#./ computed_ss
-            push!(N_errors, norm(mean_observed_ss.N[:,1:3] - computed_ss.N[:,1:3])/time_slice)
+            push!(N_errors, norm(mean_observed_ss.N - computed_ss.N)/time_slice)
 
             # computed_ss.B ≈ initial_dist || return false
 
@@ -166,6 +167,12 @@ function sufficient_stats_test(; sim_runs = 10^6)
     return true
 
 end
+
+
+
+
+
+
 
 
 """
