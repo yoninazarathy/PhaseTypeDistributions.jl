@@ -13,7 +13,7 @@ include("test_maph_basic.jl")
 # @test hypoexp_test()
 # @test hyperexp_test()
 # @test maph_moments_and_rand_test()
-# @test maph_init_test()a
+@test maph_init_test()
 # @test full_trace_sufficient_stats_test()
 #@test sufficient_stats_test()
 
@@ -31,5 +31,5 @@ include("test_maph_basic.jl")
 ## Playground area here....``
 
 # fit_maph([1.2,3.2,5.2,2.3,2.1,10.8],[1,2,1,1,2,1],8)
-@test test_fit_example1()
+# @test test_fit_example1()
 # test_init()

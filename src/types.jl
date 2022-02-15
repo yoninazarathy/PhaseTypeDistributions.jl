@@ -13,6 +13,14 @@ mutable struct MAPHDist
     α::Adjoint{Float64, Vector{Float64}}
     T::Matrix{Float64}
     T0::Matrix{Float64}
+
+    function MAPHDist(α::Adjoint{Float64, Vector{Float64}}, T::Matrix{Float64},T0::Matrix{Float64})
+        @assert size(T)[1] == size(T0)[1]
+        @show T
+        @show T0
+        @assert sum(sum(T, dims=2) + sum(T0, dims=2)) ≈ 0.0
+        return new(α, T, T0)
+    end
 end
 
 """

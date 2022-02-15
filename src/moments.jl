@@ -2,7 +2,7 @@
 QQQQ
 """
 function mean(d::PHDist)
-    return -d.α*inv(d.T)*ones(model_size(d))
+    return -d.α * inv(d.T) * ones(model_size(d))
 end
 
 """
@@ -36,7 +36,7 @@ Returns a vector of conditional means (conditional on absorbing state)
 """
 function mean(d::MAPHDist)
     d = non_degenerate_maph(d)
-    return -d.α*inv(d.T)*d.T0
+    return -d.α * inv(d.T)^2 * d.T0
 end
 
 """

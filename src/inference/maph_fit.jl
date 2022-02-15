@@ -30,13 +30,12 @@ end
 """
 QQQQ
 """
-function maximum_likelihood_estimate(p::Int,q::Int, ss::MAPHSufficientStats)
+function maximum_likelihood_estimate(p::Int, q::Int, ss::MAPHSufficientStats)
     α = ss.B
     T = ss.N[:,(q+1):(q+p)]./ss.Z
     T0 = ss.N[:,1:q]./ss.Z
     for i = 1:p
-        temp = T[i,i]
-        T[i,i]= -sum(T[i,:])-sum(T0[i,:])+temp
+        T[i,i] += -sum(T[i,:])-sum(T0[i,:])
     end
     return α, T, T0
 end
@@ -45,7 +44,7 @@ end
 """
 Fits ... QQQQ
 """
-function fit_maph(times::Vector{Float64}, absorbing_states::Vector{Int}, p::Int, max_iter::Int)
+function fit_maph(times::Vector{Float64}, absorbing_states::Vector{Int}, p::Int; max_iter::Int = 100)
     @assert length(times) == length(absorbing_states) "Vector of times and absorbing states mismatch in length"
     unique_absorbing_states = unique(absorbing_states)
     q = length(unique_absorbing_states)
@@ -55,38 +54,33 @@ function fit_maph(times::Vector{Float64}, absorbing_states::Vector{Int}, p::Int,
 
     dist = MAPHDist(p, compute_descriptive_stats(times, absorbing_states)...)
     
-
     iter = 1
 
-    while iter <max_iter
+    while iter < max_iter
 
         ## Expectation steps
         computed_ss = MAPHSufficientStats[]
         for i = 1:n
             obs = (y = times[i], a = absorbing_states[i])
             ss_i = sufficient_stats(obs,dist)
-            push!(computed_ss,ss_i)
+            push!(computed_ss, ss_i)
         end
 
         ## Maximisation steps
         mean_ss = mean(computed_ss)
 
-        α_next, T_next, T0_next = maximum_likelihood_estimate(p,q,mean_ss) 
+        α_next, T_next, T0_next = maximum_likelihood_estimate(p, q, mean_ss) 
         #remove numerical instabilities 
 
-        α_next = max.(α_next,0)
+        α_next = max.(α_next, 0) #QQQQ check why - maybe goes slightly negative
         α_next /= sum(α_next)
-        dist = MAPHDist(α_next',T_next,T0_next)
+        dist = MAPHDist(α_next', T_next, T0_next)
 
         @show dist 
 
         iter +=1
     end
-
-
-    #QQQQ - here have the fitting loop (here is the beef!)
-    #QQQQ - Zhihao continue during the week....
-    
+ 
     return dist
 end
 
