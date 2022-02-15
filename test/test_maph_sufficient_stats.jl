@@ -129,8 +129,8 @@ function sufficient_stats_test(; sim_runs = 10^6)
         if !isempty(ss_i)
             mean_observed_ss = mean(ss_i)
             time_slice = first(data[last(last.(time_bin[i]))])[1]
-            @show time_slice
             obs = first(data[last(last.(time_bin[i]))])
+            @show obs
             computed_ss = sufficient_stats(obs, maph)
             # @show computed_ss.N, mean_observed_ss.N
 

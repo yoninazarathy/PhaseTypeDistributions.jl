@@ -4,7 +4,6 @@ using Pkg
 Pkg.activate((@__DIR__) * "/..")
 
 include("../src/PhaseTypeDistributions.jl")
-
 include("test_maph_fit.jl")
 include("test_maph_init.jl")
 include("test_maph_sufficient_stats.jl")
@@ -20,8 +19,7 @@ include("test_maph_basic.jl")
 
 
 # using Plots
-# N_e, Z_e, time_vec = sufficient_stats_test_new(sim_runs = 10^4)
-# N_e, Z_e, time_vec = sufficient_stats_test(sim_runs = 10^5)
+#N_e, Z_e, time_vec = sufficient_stats_test(sim_runs = 10^4)
 
 # p1 = scatter(time_vec, N_e, xlabel = "Absorbtion time", label="N errors")
 # p2 = scatter(time_vec, Z_e, xlabel = "Absorbtion time", label="Z errors")
