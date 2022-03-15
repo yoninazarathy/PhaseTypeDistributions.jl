@@ -34,9 +34,11 @@ end
 """
 Returns a vector of conditional means (conditional on absorbing state)
 """
+
+
 function mean(d::MAPHDist)
     d = non_degenerate_maph(d)
-    return -d.α * inv(d.T)^2 * d.T0
+    return (d.α * inv(d.T)^2 * d.T0)./absorption_probs(d)
 end
 
 """
@@ -44,7 +46,7 @@ Returns a vector of conditional variances (conditional on absorbing state)
 """
 function var(d::MAPHDist)
     d = non_degenerate_maph(d)
-    second_moment = 2d.α*inv(d.T)^2*d.T0
+    second_moment = (2d.α*inv(d.T)^2*d.T0)
     return second_moment .- (mean(d).^2)
 end
 
