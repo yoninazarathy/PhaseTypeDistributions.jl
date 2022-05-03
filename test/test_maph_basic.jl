@@ -8,13 +8,23 @@ function maph_moments_and_rand_test(;N=1000)
     maph = MAPHDist([0.3,0.7]', T_example, T0_example)
 
     data = [rand(maph) for _ in 1:N]
-
-    μ_est = [mean(first.(filter((x)->x.a == i, data))) for i in 1:3] 
-
-    @show mean(maph) ,μ_est
-    σ2_est = [var(first.(filter((x)->x.a == i, data))) for i in 1:3]
-    scv_est = [scv(first.(filter((x)->x.a == i, data))) for i in 1:3]
     π_est = [count((x)->x.a == i, data)/length(data) for i in 1:3]
+
+    μ_est = [mean(first.(filter((x)->x.a == i, data))) for i in 1:3]
+
+    
+
+    
+    σ2_est = [var(first.(filter((x)->x.a == i, data))) for i in 1:3]
+
+    @show mean(maph), μ_est
+    @show var(maph),σ2_est
+
+
+    scv_est = [scv(first.(filter((x)->x.a == i, data))) for i in 1:3]
+
+    @show scv(maph), scv_est
+    
 
 
     # first_moment = mean(maph)

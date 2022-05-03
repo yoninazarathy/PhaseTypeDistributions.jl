@@ -55,9 +55,7 @@ function fit_maph(times::Vector{Float64}, absorbing_states::Vector{Int}, p::Int;
     dist = MAPHDist(p, compute_descriptive_stats(times, absorbing_states)...)
     
     iter = 1
-
     while iter < max_iter
-
         ## Expectation steps
         computed_ss = MAPHSufficientStats[]
         for i = 1:n
@@ -75,8 +73,6 @@ function fit_maph(times::Vector{Float64}, absorbing_states::Vector{Int}, p::Int;
         α_next = max.(α_next, 0) #QQQQ check why - maybe goes slightly negative
         α_next /= sum(α_next)
         dist = MAPHDist(α_next', T_next, T0_next)
-
-        @show dist 
 
         iter +=1
     end

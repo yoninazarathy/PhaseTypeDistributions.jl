@@ -217,7 +217,6 @@ function analyze_ss_with_plots()
     initial_dist = [0.5,0.5]
 
     maph = MAPHDist(initial_dist', T_example, T0_example)
-    @show maph
 
     SingleObs = NamedTuple{(:y, :a), Tuple{Float64, Int64}}
 

@@ -28,7 +28,7 @@ function absorption_probs(d::MAPHDist)
     D = Diagonal(d.T)
     PT  = I-inv(D)*d.T
     PT0 = -inv(D)*d.T0
-    return d.α*inv(I-PT)*PT0 
+    return -d.α*inv(d.T)*d.T0
 end
 
 """
@@ -38,7 +38,7 @@ Returns a vector of conditional means (conditional on absorbing state)
 
 function mean(d::MAPHDist)
     d = non_degenerate_maph(d)
-    return (d.α * inv(d.T)^2 * d.T0)./absorption_probs(d)
+    return (d.α * inv(d.T)^2* d.T0)./absorption_probs(d)
 end
 
 """
@@ -46,13 +46,13 @@ Returns a vector of conditional variances (conditional on absorbing state)
 """
 function var(d::MAPHDist)
     d = non_degenerate_maph(d)
-    second_moment = (2d.α*inv(d.T)^2*d.T0)
-    return second_moment .- (mean(d).^2)
+    second_moment = -2*d.α*inv(d.T)^3*d.T0
+    return second_moment./absorption_probs(d) .- (mean(d).^2)
 end
 
 """
 Returns a vector of conditional scvs (conditional on absorbing state)
 """
 function scv(d::MAPHDist)
-    return var(d) ./ (mean(d).^2) #QQQQ
+    return var(d) ./ (mean(d).^2) 
 end

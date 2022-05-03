@@ -2,13 +2,15 @@
 QQQQ
 """
 function test_fit_example1(;sim_runs=10^2)
-    Λ₄, λ45, λ54, Λ₅ = 5, 2, 7, 10
-    μ41, μ42, μ43, μ51, μ52, μ53 = 1, 1, 1, 1, 1, 1 
+    Λ₄, λ45, λ54, Λ₅ = 5.0, 2.0, 7.0, 10.0
+    μ41, μ42, μ43, μ51, μ52, μ53 = 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 
     T_example = [-Λ₄ λ45; λ54 -Λ₅]
     T0_example = [μ41 μ42 μ43; μ51 μ52 μ53]
     initial_dist = [0.5,0.5]
 
-    maph = MAPHDist(initial_dist', T_example, T0_example)
+    maph = MAPHDist(initial_dist',T_example, T0_example)
+
+    @show maph
    
     absorbtion_probs_of_true_dist = absorption_probs(maph)
     mean_of_true_dist = mean(maph)
@@ -24,14 +26,16 @@ function test_fit_example1(;sim_runs=10^2)
         absorbing_states[i] = state
     end
 
-    estimated_dist = fit_maph(times, absorbing_states,10,max_iter = 0)
+    estimated_dist = fit_maph(times, absorbing_states, 6, max_iter = 30)
 
     absorbtion_probs_of_estimated_dist = absorption_probs(estimated_dist)
     mean_of_estimated_dist = mean(estimated_dist)
     scvs_of_estimated_dist = scv(estimated_dist)
 
-    @show absorbtion_probs_of_true_dist
-    @show absorbtion_probs_of_estimated_dist
+    @show absorbtion_probs_of_true_dist,absorbtion_probs_of_estimated_dist
+    @show mean_of_estimated_dist, mean_of_true_dist
+    @show scvs_of_estimated_dist, scvs_of_true_dist
 
     return true
 end
+
