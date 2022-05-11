@@ -52,7 +52,14 @@ function fit_maph(times::Vector{Float64}, absorbing_states::Vector{Int}, p::Int;
     n = length(times)
     print("Fitting MAPH with p=$p hidden states, q=$q absorbing states, and n=$n observations")
 
-    dist = MAPHDist(p, compute_descriptive_stats(times, absorbing_states)...)
+    ds = compute_descriptive_stats(times, absorbing_states)
+    
+    @show ds
+    dist = MAPHDist(p, ds...)
+
+    
+   
+    
     
     iter = 1
     while iter < max_iter
@@ -70,9 +77,13 @@ function fit_maph(times::Vector{Float64}, absorbing_states::Vector{Int}, p::Int;
         α_next, T_next, T0_next = maximum_likelihood_estimate(p, q, mean_ss) 
         #remove numerical instabilities 
 
+        @show T_next, T0_next
+
         α_next = max.(α_next, 0) #QQQQ check why - maybe goes slightly negative
         α_next /= sum(α_next)
         dist = MAPHDist(α_next', T_next, T0_next)
+
+        
 
         iter +=1
     end

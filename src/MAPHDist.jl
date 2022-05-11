@@ -6,6 +6,8 @@ This tries to do a best "moment fit" for the probability of absorbitions, means,
 
 """
 function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::Vector{Float64})
+    @show "Constructor base on moments"
+
     q = length(probs)
     length(means) != q && error("Dimension mismatch")
     length(scvs) != q && error("Dimension mismatch")
@@ -58,6 +60,12 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
         T[1:m,1:m] = T_temp
         T0[1:m,1:n]=T0_temp
     end
+
+    ### fix T,T0 to be stochastic Matrix due to numerical error in the computation above 
+
+    excess = sum(T, dims = 2) + sum(T0, dims = 2)
+
+    T = T + Diagonal(vec(excess))
 
     maph = MAPHDist(α,T,T0)
 

@@ -16,7 +16,10 @@ mutable struct MAPHDist
 
     function MAPHDist(α::Adjoint{Float64, Vector{Float64}}, T::Matrix{Float64},T0::Matrix{Float64})
         @assert size(T)[1] == size(T0)[1]
-        @assert sum(sum(T, dims=2) + sum(T0, dims=2)) ≈ 0.0
+
+        ## todo clean..
+        #@assert sum(sum(T, dims=2) + sum(T0, dims=2)) ≈ 0.0
+        @assert isapprox(sum(sum(T, dims=2) + sum(T0, dims=2)),0,atol = 10e-12)
         return new(α, T, T0)
     end
 end
