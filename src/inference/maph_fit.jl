@@ -31,13 +31,32 @@ end
 QQQQ
 """
 function maximum_likelihood_estimate(p::Int, q::Int, ss::MAPHSufficientStats)
-    α = ss.B
+    α_next = max.(ss.B,0)
+    t_next = max.(ss.N[:,end]./ss.Z,0)
+
+    t_next[isnan.(t_next)].=0
+
+    T_next = zeros(p,p)
+    T0_next = zeros(p,q)
+
+    for i = 1:p
+        T_next[i,:] = max.(ss.N[i,(q+1):(q+p)]./ss.Z[i],0)
+        T_next[i,isnan.(T_next[i,:])].=0
+        T_next[i,i] = -(t_next[i]+sum(T_next[i,:]))
+        T0_next[i,:] = max.(ss.N[i,1:q]./ss.Z[i],0)
+        T0_next[i,isnan.(T0_next[i,:])].=0
+    end
+
     T = ss.N[:,(q+1):(q+p)]./ss.Z
     T0 = ss.N[:,1:q]./ss.Z
     for i = 1:p
         T[i,i] += -sum(T[i,:])-sum(T0[i,:])
     end
-    return α, T, T0
+
+    display(T0)
+    display(T0_next)
+
+    return α_next, T, T0
 end
 
 
@@ -77,7 +96,7 @@ function fit_maph(times::Vector{Float64}, absorbing_states::Vector{Int}, p::Int;
         α_next, T_next, T0_next = maximum_likelihood_estimate(p, q, mean_ss) 
         #remove numerical instabilities 
 
-        @show T_next, T0_next
+        #@show T_next, T0_next
 
         α_next = max.(α_next, 0) #QQQQ check why - maybe goes slightly negative
         α_next /= sum(α_next)
