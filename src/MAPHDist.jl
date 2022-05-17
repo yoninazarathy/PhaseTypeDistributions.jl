@@ -14,7 +14,6 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
    
     πhat_order = sortperm(probs)
     sorted_scvs = scvs[πhat_order]
-    @show sorted_scvs
     sorted_means = means[πhat_order]
 
     num_phases = [sorted_scvs[i] ≥ 1 ? 2 : ceil(1/sorted_scvs[i]) for i in 1:q]
@@ -28,11 +27,9 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
     dist = []
     for k = 1:q
         if sorted_scvs[k]≥1
-            @show "making Hyper-exp"
             push!(dist,hyper_exp_init(sorted_means[k],sorted_scvs[k]))
         end
         if sorted_scvs[k]<1
-            @show "making Erlang"
             push!(dist,hypo_exp_init(sorted_means[k],sorted_scvs[k]))
         end
     end
