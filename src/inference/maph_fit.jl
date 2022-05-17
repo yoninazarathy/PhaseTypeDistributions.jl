@@ -30,22 +30,24 @@ end
 """
 QQQQ
 """
+#Maybe rename this function to "maximization step..." or similar
 function maximum_likelihood_estimate(p::Int, q::Int, ss::MAPHSufficientStats)
     α_next = max.(ss.B,0)
-    t_next = max.(ss.N[:,end]./ss.Z,0)
+    t_next = max.(ss.N[:,1:q] ./ ss.Z,0)
 
-    t_next[isnan.(t_next)].=0
+    t_next[isnan.(t_next)] .= 0
 
-    T_next = zeros(p,p)
+    T_next = zeros(p,p) 
     T0_next = zeros(p,q)
 
     for i = 1:p
         T_next[i,:] = max.(ss.N[i,(q+1):(q+p)]./ss.Z[i],0)
         T_next[i,isnan.(T_next[i,:])].=0
-        T_next[i,i] = -(t_next[i]+sum(T_next[i,:]))
+        T_next[i,i] = -(sum(t_next[i,:]) + sum(T_next[i,:])) #-(t_next[i]+sum(T_next[i,:]))
         T0_next[i,:] = max.(ss.N[i,1:q]./ss.Z[i],0)
         T0_next[i,isnan.(T0_next[i,:])].=0
     end
+    #################
 
     T = ss.N[:,(q+1):(q+p)]./ss.Z
     T0 = ss.N[:,1:q]./ss.Z
@@ -56,7 +58,7 @@ function maximum_likelihood_estimate(p::Int, q::Int, ss::MAPHSufficientStats)
     display(T0)
     display(T0_next)
 
-    return α_next, T, T0
+    return α_next, T_next, T0_next
 end
 
 
@@ -74,14 +76,15 @@ function fit_maph(times::Vector{Float64}, absorbing_states::Vector{Int}, p::Int;
     ds = compute_descriptive_stats(times, absorbing_states)
     
     @show ds
-    dist = MAPHDist(p, ds...)
+    dist = MAPHDist(p, ds...) #Moment based initilization...
 
-    
-   
-    
+    @show absorption_probs(dist)
     
     iter = 1
     while iter < max_iter
+
+        #QQQQ - refactor next couple of lines...
+
         ## Expectation steps
         computed_ss = MAPHSufficientStats[]
         for i = 1:n
@@ -101,8 +104,6 @@ function fit_maph(times::Vector{Float64}, absorbing_states::Vector{Int}, p::Int;
         α_next = max.(α_next, 0) #QQQQ check why - maybe goes slightly negative
         α_next /= sum(α_next)
         dist = MAPHDist(α_next', T_next, T0_next)
-
-        
 
         iter +=1
     end

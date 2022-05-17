@@ -26,8 +26,6 @@ Returns a vector of absorption probabilities for the MAPH dist
 function absorption_probs(d::MAPHDist)
     d = non_degenerate_maph(d)
     D = Diagonal(d.T)
-    PT  = I-inv(D)*d.T
-    PT0 = -inv(D)*d.T0
     return -d.α*inv(d.T)*d.T0
 end
 

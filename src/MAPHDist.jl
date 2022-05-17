@@ -6,7 +6,7 @@ This tries to do a best "moment fit" for the probability of absorbitions, means,
 
 """
 function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::Vector{Float64})
-    @show "Constructor base on moments"
+    @show "Constructor based on moments"
 
     q = length(probs)
     length(means) != q && error("Dimension mismatch")
@@ -14,6 +14,7 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
    
     πhat_order = sortperm(probs)
     sorted_scvs = scvs[πhat_order]
+    @show sorted_scvs
     sorted_means = means[πhat_order]
 
     num_phases = [sorted_scvs[i] ≥ 1 ? 2 : ceil(1/sorted_scvs[i]) for i in 1:q]
@@ -27,9 +28,11 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
     dist = []
     for k = 1:q
         if sorted_scvs[k]≥1
+            @show "making Hyper-exp"
             push!(dist,hyper_exp_init(sorted_means[k],sorted_scvs[k]))
         end
         if sorted_scvs[k]<1
+            @show "making Erlang"
             push!(dist,hypo_exp_init(sorted_means[k],sorted_scvs[k]))
         end
     end
@@ -66,6 +69,8 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
     excess = sum(T, dims = 2) + sum(T0, dims = 2)
 
     T = T + Diagonal(vec(excess))
+
+    @show α
 
     maph = MAPHDist(α,T,T0)
 
