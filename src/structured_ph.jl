@@ -32,7 +32,8 @@ function hypo_exp_init(mean::Float64,scv::Float64)::PHDist
     n = Int(ceil(1/scv))
 
     ν1 = n/(1+sqrt((n-1)*(n*scv-1)))
-    ν2 = ν1*(n-1)/(ν1-1)
+    # ν2 = ν1*(n-1)/(ν1-1)
+    ν2 = -(n-1)/(1-ν1)
 
     α = zeros(n)'
     α[1] = 1

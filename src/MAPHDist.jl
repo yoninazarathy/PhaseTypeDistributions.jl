@@ -23,6 +23,9 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
     K = findfirst((x)->x ≤ p, [sum(num_phases[k:end]) for k=1:q])
     K ∉ (1:q) && error("Not enough phases to start")
 
+    @show num_phases, K
+
+
 
     dist = []
     for k = 1:q
@@ -67,7 +70,9 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
 
     T = T + Diagonal(vec(excess))
 
-    @show α
+
+    display(T)
+    display(T0)
 
     maph = MAPHDist(α,T,T0)
 
