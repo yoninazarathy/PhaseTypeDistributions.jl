@@ -19,7 +19,7 @@ mutable struct MAPHDist
 
         ## todo clean..
         #@assert sum(sum(T, dims=2) + sum(T0, dims=2)) ≈ 0.0
-        @assert isapprox(sum(sum(T, dims=2) + sum(T0, dims=2)),0,atol = 10e-12)
+        @assert isapprox(sum(sum(T, dims=2) + sum(T0, dims=2)),0,atol = 10e-5)
         return new(α, T, T0)
     end
 end

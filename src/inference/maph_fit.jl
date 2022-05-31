@@ -55,8 +55,6 @@ function maximum_likelihood_estimate(p::Int, q::Int, ss::MAPHSufficientStats)
         T[i,i] += -sum(T[i,:])-sum(T0[i,:])
     end
 
-    display(T0)
-    display(T0_next)
 
     return α_next, T_next, T0_next
 end

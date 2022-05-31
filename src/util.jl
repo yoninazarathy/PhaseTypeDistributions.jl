@@ -45,7 +45,7 @@ end
 
 function horizontal_merge_matrix(M::Matrix{Float64},p::Int64)
     m, n = size(M)
-
+    
     new_M = zeros((m,p))
 
     for i=1:(p-1)

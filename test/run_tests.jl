@@ -16,7 +16,7 @@ Random.seed!(2)
 # @test hypoexp_test()
 # @test hyperexp_test()
 # @test maph_moments_and_rand_test(;N=1000000)
-@test test_fit_example1(;sim_runs=10^4)
+@test test_fit_example1(;sim_runs=10^2)
 #@test full_trace_sufficient_stats_test()
 #@test sufficient_stats_test()
 

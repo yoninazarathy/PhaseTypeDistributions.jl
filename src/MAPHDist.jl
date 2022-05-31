@@ -37,9 +37,9 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
         end
     end
 
-    α = zeros(p)'
-    T = ones(p,p).*eps()
-    T0 = ones(p,q).*eps() 
+    α = ones(p)'/p
+    T = zeros(p,p)
+    T0 = zeros(p,q) 
 
 
     reverse_order = sortperm(πhat_order)
@@ -54,14 +54,27 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
         T[1:m,1:m] = T_temp
         T0[1:m,1:n] = T0_temp
     else
-        idx_drop = πhat_order[1:K-1]
-        probs = probs[eachindex(probs) .∉ Ref(idx_drop)]
-        reversed_dist = reversed_dist[eachindex(reversed_dist) .∉ Ref(idx_drop)]
-        α_temp, T_temp, T0_temp = merge_dist(probs,reversed_dist)
-        m,n = model_size(MAPHDist(α_temp, T_temp, T0_temp))
-        α[1:m] =α_temp
-        T[1:m,1:m] = T_temp
-        T0[1:m,1:n]=T0_temp
+        α_temp1, T_temp1, T0_temp1 = merge_dist(probs,reversed_dist)
+        T0 = vertical_merge_matrix(T0_temp1,p)
+        for i = 1:p
+            if sum(T_temp1[i,:]) ==0
+                T[i,:] = T_temp1[i,1:p]
+            else
+                T0_sum =  -1.0.*sum(T0,dims=2)
+                T[i,i] = T0_sum[i]
+            end
+        end
+
+        #idx_drop = πhat_order[1:K-1]
+        #probs = probs[eachindex(probs) .∉ Ref(idx_drop)]
+        # reversed_dist = reversed_dist[eachindex(reversed_dist) .∉ Ref(idx_drop)]
+        # α_temp, T_temp, T0_temp = merge_dist(probs,reversed_dist)
+        # @show "hello2"
+        # display(vertical_merge_matrix(T0_temp1,p))
+        # m,n = model_size(MAPHDist(α_temp, T_temp, T0_temp))
+        # α[1:m] =α_temp
+        # T[1:m,1:m] = T_temp
+        # T0[1:m,1:n]=T0_temp
     end
 
     ### fix T,T0 to be stochastic Matrix due to numerical error in the computation above 
@@ -70,15 +83,17 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
 
     T = T + Diagonal(vec(excess))
 
-
-    display(T)
-    display(T0)
-
     maph = MAPHDist(α,T,T0)
+    display(α)
+    display(T0)
+    display(T)
+
 
     return maph
 
 end
+
+
 
 
 function q_matrix(d::MAPHDist)::Matrix{Float64}

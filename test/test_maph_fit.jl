@@ -26,7 +26,7 @@ function test_fit_example1(;sim_runs=10^2)
         absorbing_states[i] = state
     end
 
-    estimated_dist = fit_maph(times, absorbing_states, 4, max_iter = 0)
+    estimated_dist = fit_maph(times, absorbing_states, 2, max_iter = 5)
 
 
     absorbtion_probs_of_estimated_dist = absorption_probs(estimated_dist)
