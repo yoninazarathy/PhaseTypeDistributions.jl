@@ -28,6 +28,18 @@ function merge_dist(probs::Vector{Float64},dist::Vector{Any})
 end
 
 
+function absorption_vector_create(T1::Matrix{Float64},prob::Vector{Float64})
+    p = length(T)
+    q = length(probs)
+    T0 = zeros((p,q))
+
+    for i = 1:p
+        T0[i,:] = T1[i,1].*probs
+    end
+
+end
+
+
 
 function vertical_merge_matrix(M::Matrix{Float64},p::Int64)
     m, n = size(M)
@@ -42,6 +54,7 @@ function vertical_merge_matrix(M::Matrix{Float64},p::Int64)
 
     return new_M
 end
+
 
 function horizontal_merge_matrix(M::Matrix{Float64},p::Int64)
     m, n = size(M)

@@ -38,9 +38,10 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
     end
 
     α = ones(p)'/p
-    T = zeros(p,p)
-    T0 = zeros(p,q) 
+    T = ones(p,p).*eps()
+    T0 = ones(p,q).*eps() 
 
+    T2 = ones(p,q).*eps() 
 
     reverse_order = sortperm(πhat_order)
     
@@ -54,27 +55,43 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
         T[1:m,1:m] = T_temp
         T0[1:m,1:n] = T0_temp
     else
-        α_temp1, T_temp1, T0_temp1 = merge_dist(probs,reversed_dist)
-        T0 = vertical_merge_matrix(T0_temp1,p)
-        for i = 1:p
-            if sum(T_temp1[i,:]) ==0
-                T[i,:] = T_temp1[i,1:p]
-            else
-                T0_sum =  -1.0.*sum(T0,dims=2)
-                T[i,i] = T0_sum[i]
-            end
+        # α_temp1, T_temp1, T0_temp1 = merge_dist(probs,reversed_dist)
+        # T0 = vertical_merge_matrix(T0_temp1,p)
+        # for i = 1:p
+        #     if sum(T_temp1[i,:]) ==0
+        #         T[i,:] = T_temp1[i,1:p]
+        #     else
+        #         T0_sum =  -1.0.*sum(T0,dims=2)
+        #         T[i,i] = T0_sum[i]
+        #     end
+        # end
+        idx_drop = πhat_order[1:K-1]
+        @show probs,idx_drop
+        probs_dropped = probs[eachindex(probs).∈ Ref(idx_drop)]
+        probs_undropped = probs[eachindex(probs) .∉ Ref(idx_drop)]
+        means_dropped = means[eachindex(means).∈ Ref(idx_drop)]
+        @show probs_dropped,probs_undropped,means_dropped
+        reversed_dist_undropped = reversed_dist[eachindex(reversed_dist) .∉ Ref(idx_drop)]
+
+        dropped_dist = [hyper_exp_init(sum(probs_dropped.*means_dropped),1.0)]
+   
+
+        @show reversed_dist
+        α_temp, T_temp, T0_temp = merge_dist(probs_undropped,reversed_dist_undropped)
+        @show "hello2"
+        display(T_temp)
+        display(T0_temp)
+
+        display(T0)
+        m,n = model_size(MAPHDist(α_temp, T_temp, T0_temp))
+
+        for i = 1:m
+            T0[i,:] = sum(T0_temp[i,:]).*probs
         end
 
-        #idx_drop = πhat_order[1:K-1]
-        #probs = probs[eachindex(probs) .∉ Ref(idx_drop)]
-        # reversed_dist = reversed_dist[eachindex(reversed_dist) .∉ Ref(idx_drop)]
-        # α_temp, T_temp, T0_temp = merge_dist(probs,reversed_dist)
-        # @show "hello2"
-        # display(vertical_merge_matrix(T0_temp1,p))
-        # m,n = model_size(MAPHDist(α_temp, T_temp, T0_temp))
-        # α[1:m] =α_temp
-        # T[1:m,1:m] = T_temp
-        # T0[1:m,1:n]=T0_temp
+        α[1:m] =α_temp
+        T[1:m,1:m] = T_temp
+        #T0[1:m,1:n]=T0_temp
     end
 
     ### fix T,T0 to be stochastic Matrix due to numerical error in the computation above 
@@ -87,7 +104,6 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
     display(α)
     display(T0)
     display(T)
-
 
     return maph
 
