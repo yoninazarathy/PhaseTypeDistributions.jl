@@ -13,12 +13,19 @@ function hyper_exp_init(mean_desired::Float64, scv_desired::Float64)::PHDist
     α[2] = 1-p
 
     T = zeros(2,2)
-    T[1,1] = -1/μ1
-    T[2,2] = -1/μ2
-    return PHDist(α, (1/mean_desired)*T^(-1))
+    T[1,1] = -μ1
+    T[2,2] = -μ2
+    return PHDist(α, (1/mean_desired)*T)
 end
 
- 
+
+
+function exp_init(mean_desired::Float64)::PHDist
+    T = zeros(1,1)
+    α = ones(1)'
+    T[1,1] = -1/mean_desired
+    return PHDist(α,T)
+end
 
 """
 
@@ -50,4 +57,13 @@ function hypo_exp_init(mean::Float64,scv::Float64)::PHDist
 
     return PHDist(α, (1/mean)*T) 
 end
+
+
+
+function mixed_expo_dist(p1,ω)
+    α = ones(p1)'/p
+    return PHDist(α,Matrix(-ω*I(p1)))
+
+end
+
 

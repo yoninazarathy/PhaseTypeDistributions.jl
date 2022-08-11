@@ -63,7 +63,7 @@ end
 """
 Fits ... QQQQ
 """
-function fit_maph(times::Vector{Float64}, absorbing_states::Vector{Int}, p::Int; max_iter::Int = 100)
+function fit_maph(times::Vector{Float64}, absorbing_states::Vector{Int}, p::Int; max_iter::Int = 100,ω::Float64)
     @assert length(times) == length(absorbing_states) "Vector of times and absorbing states mismatch in length"
     unique_absorbing_states = unique(absorbing_states)
     q = length(unique_absorbing_states)
@@ -74,7 +74,7 @@ function fit_maph(times::Vector{Float64}, absorbing_states::Vector{Int}, p::Int;
     ds = compute_descriptive_stats(times, absorbing_states)
     
     @show ds
-    dist = MAPHDist(p, ds...) #Moment based initilization...
+    dist = MAPHDist(p, ds..., ω) #Moment based initilization...
 
     @show absorption_probs(dist)
     

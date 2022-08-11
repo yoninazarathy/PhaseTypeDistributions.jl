@@ -14,9 +14,10 @@ using Random
 Random.seed!(2)
 
 # @test hypoexp_test()
-# @test hyperexp_test()
-# @test maph_moments_and_rand_test(;N=1000000)
+#test hyperexp_test()
+#@test maph_moments_and_rand_test(;N=1000000)
 @test test_fit_example1(;sim_runs=10^2)
+#@test maph_init_test()
 #@test full_trace_sufficient_stats_test()
 #@test sufficient_stats_test()
 
@@ -34,4 +35,5 @@ Random.seed!(2)
 
 # fit_maph([1.2,3.2,5.2,2.3,2.1,10.8],[1,2,1,1,2,1],8)
 # @test test_fit_example1()
-# test_init()
+#@test test_maph_init()
+

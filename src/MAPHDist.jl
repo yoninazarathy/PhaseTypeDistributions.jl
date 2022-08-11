@@ -5,7 +5,7 @@ Create an MAPHDist of dimensions pxq where q is the length of `probs`, `means`, 
 This tries to do a best "moment fit" for the probability of absorbitions, means, and scvs
 
 """
-function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::Vector{Float64})
+function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::Vector{Float64},ω::Float64)
     @show "Constructor based on moments"
 
     q = length(probs)
@@ -16,14 +16,26 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
     sorted_scvs = scvs[πhat_order]
     sorted_means = means[πhat_order]
 
+    sorted_means = matched_mean.(sorted_means,ω)
+
+    sorted_scvs = matched_scv.(sorted_scvs,sorted_means,ω)
+
+    @show sorted_means, sorted_scvs
     num_phases = [sorted_scvs[i] ≥ 1 ? 2 : ceil(1/sorted_scvs[i]) for i in 1:q]
 
     required_phases = sum(num_phases)
     K=0
-    K = findfirst((x)->x ≤ p, [sum(num_phases[k:end]) for k=1:q])
+    K = q-findfirst((x)->x ≤ p-1, [sum(num_phases[k:end]) for k=1:q])+1
     K ∉ (1:q) && error("Not enough phases to start")
 
-    @show num_phases, K
+
+    p2 = sum(num_phases[K:end])
+    p1 = p - p2
+
+
+    @show num_phases, K, (p,p1,p2)
+
+
 
 
 

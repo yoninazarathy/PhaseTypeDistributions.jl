@@ -54,3 +54,14 @@ Returns a vector of conditional scvs (conditional on absorbing state)
 function scv(d::MAPHDist)
     return var(d) ./ (mean(d).^2) 
 end
+
+
+
+function matched_mean(mean::Float64,ω::Float64)
+    return mean - 1/ω
+end
+
+
+function matched_scv(scv::Float64, mean::Float64, ω::Float64)
+    return (scv*(ω*mean+1)^2-1)/(ω*mean)^2
+end

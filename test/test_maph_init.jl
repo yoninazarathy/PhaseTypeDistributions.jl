@@ -17,7 +17,7 @@ function maph_init_test()
     T_example = [-Λ₄ λ45; λ54 -Λ₅]
     T0_example = [μ41 μ42 μ43; μ51 μ52 μ53]
     initial_dist = [0.5,0.5]
-    maph = MAPHDist(initial_dist', 3*T_example, 3*T0_example)
+    maph = MAPHDist(initial_dist', T_example, T0_example)
     @show absorption_probs(maph)
     @show mean(maph)
 
