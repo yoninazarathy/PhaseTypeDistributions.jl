@@ -60,10 +60,9 @@ end
 
 
 
-function mixed_expo_dist(p1,ω)
-    α = ones(p1)'/p
+function mixed_expo_dist(p1::Int64,ω::Float64)
+    α = (ones(p1)/p)'
     return PHDist(α,Matrix(-ω*I(p1)))
-
 end
 
 

@@ -38,7 +38,6 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
 
 
 
-
     dist = []
     for k = 1:q
         if sorted_scvs[k]≥1
@@ -51,13 +50,18 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
 
     α = ones(p)'/p
     T = ones(p,p).*eps()
-    T0 = ones(p,q).*eps() 
-
+    T0 = ones(p,q).*eps()
     T2 = ones(p,q).*eps() 
+
+    TS1S1 = Matrix(-ω*I(Int(p1)))
+
+    @show TS1S1
+
 
     reverse_order = sortperm(πhat_order)
     
     reversed_dist = dist[reverse_order]
+
 
 
     if p ≥ required_phases
@@ -67,16 +71,6 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
         T[1:m,1:m] = T_temp
         T0[1:m,1:n] = T0_temp
     else
-        # α_temp1, T_temp1, T0_temp1 = merge_dist(probs,reversed_dist)
-        # T0 = vertical_merge_matrix(T0_temp1,p)
-        # for i = 1:p
-        #     if sum(T_temp1[i,:]) ==0
-        #         T[i,:] = T_temp1[i,1:p]
-        #     else
-        #         T0_sum =  -1.0.*sum(T0,dims=2)
-        #         T[i,i] = T0_sum[i]
-        #     end
-        # end
         idx_drop = πhat_order[1:K-1]
         @show probs,idx_drop
         probs_dropped = probs[eachindex(probs).∈ Ref(idx_drop)]
@@ -86,8 +80,6 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
         reversed_dist_undropped = reversed_dist[eachindex(reversed_dist) .∉ Ref(idx_drop)]
 
         dropped_dist = [hyper_exp_init(sum(probs_dropped.*means_dropped),1.0)]
-   
-
         @show reversed_dist
         α_temp, T_temp, T0_temp = merge_dist(probs_undropped,reversed_dist_undropped)
         @show "hello2"
