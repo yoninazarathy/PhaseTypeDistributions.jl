@@ -13,6 +13,8 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
     length(scvs) != q && error("Dimension mismatch")
    
     πhat_order = sortperm(probs)
+
+    π =probs[πhat_order]
     sorted_scvs = scvs[πhat_order]
     sorted_means = means[πhat_order]
 
@@ -32,11 +34,7 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
     p2 = sum(num_phases[K:end])
     p1 = p - p2
 
-
     @show num_phases, K, (p,p1,p2)
-
-
-
 
     dist = []
     for k = 1:q
@@ -48,14 +46,21 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
         end
     end
 
+
+    used_dist = dist[K:q]
+
+    @show q
+    α_test, T_test, T0_test = cat_dist(π[K:q],used_dist,ω,Int(p1),Int(p2),q)
+
+    display(α_test)
+    display(T_test)
+    display(T0_test)
+
+
     α = ones(p)'/p
     T = ones(p,p).*eps()
     T0 = ones(p,q).*eps()
     T2 = ones(p,q).*eps() 
-
-    TS1S1 = Matrix(-ω*I(Int(p1)))
-
-    @show TS1S1
 
 
     reverse_order = sortperm(πhat_order)
@@ -64,7 +69,7 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
 
 
 
-    if p ≥ required_phases
+    if p -1 ≥ required_phases
         α_temp, T_temp, T0_temp = merge_dist(probs,reversed_dist)
         m,n = model_size(MAPHDist(α_temp, T_temp, T0_temp))
         α[1:m] = α_temp
@@ -72,21 +77,14 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
         T0[1:m,1:n] = T0_temp
     else
         idx_drop = πhat_order[1:K-1]
-        @show probs,idx_drop
         probs_dropped = probs[eachindex(probs).∈ Ref(idx_drop)]
         probs_undropped = probs[eachindex(probs) .∉ Ref(idx_drop)]
         means_dropped = means[eachindex(means).∈ Ref(idx_drop)]
-        @show probs_dropped,probs_undropped,means_dropped
         reversed_dist_undropped = reversed_dist[eachindex(reversed_dist) .∉ Ref(idx_drop)]
 
         dropped_dist = [hyper_exp_init(sum(probs_dropped.*means_dropped),1.0)]
-        @show reversed_dist
         α_temp, T_temp, T0_temp = merge_dist(probs_undropped,reversed_dist_undropped)
-        @show "hello2"
-        display(T_temp)
-        display(T0_temp)
-
-        display(T0)
+ 
         m,n = model_size(MAPHDist(α_temp, T_temp, T0_temp))
 
         for i = 1:m
@@ -104,10 +102,7 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
 
     T = T + Diagonal(vec(excess))
 
-    maph = MAPHDist(α,T,T0)
-    display(α)
-    display(T0)
-    display(T)
+    maph = MAPHDist(α_test,T_test,T0_test)
 
     return maph
 

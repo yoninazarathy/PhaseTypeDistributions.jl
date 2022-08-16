@@ -28,6 +28,56 @@ function merge_dist(probs::Vector{Float64},dist::Vector{Any})
 end
 
 
+function cat_dist(probs::Vector{Float64},dist::Vector{Any},ω::Float64,p1::Int64,p2::Int64,q::Int64)
+    merged_T = [dist[i].T for i = 1:length(dist)]
+    TS2S2 = cat(merged_T..., dims = (1,2))
+
+    merged_α = [ω*probs[i]/sum(probs).*dist[i].α for i = 1:length(dist)]
+
+    merged_T0 = [-1.0.*sum(dist[i].T,dims = 2) for i =1:length(dist)]
+
+    @show merged_T0
+
+    S2T0 = cat(merged_T0...,dims = (1,2))
+
+    v = cat(merged_α..., dims = (2,2))
+    
+    TS1S2 = repeat(v,p1)
+
+    TS1S2 = cat(merged_α..., dims = (2,2))
+
+
+    Imatrix = Matrix(-ω.*I(Int(p1)))
+
+    M = cat(Imatrix,zeros(p2,p1),dims = (1,1))
+
+    N = cat(TS1S2,TS2S2,dims = (1,1))
+
+    T = cat(M,N, dims = (2,2))
+
+    T0 = cat(zeros(p1,length(dist)),S2T0,dims = (1,1))
+
+    if length(dist) < q
+        @show 1
+        T0 = cat(T0,zeros(p1+p2,q-length(dist)),dims = (2,2))
+    end
+
+
+    α = zeros(1,p1+p2)
+    
+    α[1:p1] .= 1/p1
+
+    α = vec(α)'
+
+
+    return  α,T,T0
+
+end
+
+
+
+
+
 function absorption_vector_create(T1::Matrix{Float64},prob::Vector{Float64})
     p = length(T)
     q = length(probs)
@@ -41,31 +91,9 @@ end
 
 
 
-function vertical_merge_matrix(M::Matrix{Float64},p::Int64)
-    m, n = size(M)
-
-    new_M = zeros((p,n))
-
-    for i=1:(p-1)
-        new_M[i,:] = M[i,:]
-    end
-
-    new_M[p,:] = sum(M[p:m,:],dims=1)
-
-    return new_M
-end
 
 
-function horizontal_merge_matrix(M::Matrix{Float64},p::Int64)
-    m, n = size(M)
-    
-    new_M = zeros((m,p))
 
-    for i=1:(p-1)
-        new_M[:,i] = M[:,i]
-    end
 
-    new_M[:,p] = sum(M[:,p:m],dims=2)
 
-    return new_M
-end
+
