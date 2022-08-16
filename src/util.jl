@@ -27,7 +27,9 @@ function merge_dist(probs::Vector{Float64},dist::Vector{Any})
     return α_temp, T_temp, T0_temp
 end
 
+"""
 
+"""
 function cat_dist(probs::Vector{Float64},dist::Vector{Any},ω::Float64,p1::Int64,p2::Int64,q::Int64)
     merged_T = [dist[i].T for i = 1:length(dist)]
     TS2S2 = cat(merged_T..., dims = (1,2))
@@ -42,7 +44,8 @@ function cat_dist(probs::Vector{Float64},dist::Vector{Any},ω::Float64,p1::Int64
 
     v = cat(merged_α..., dims = (2,2))
     
-    TS1S2 = repeat(v,p1)
+    @show p1
+    TS1S2 = repeat(v, p1)
 
     TS1S2 = cat(merged_α..., dims = (2,2))
 
