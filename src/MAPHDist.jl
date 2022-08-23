@@ -37,7 +37,7 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
 
     used_absorb = sort(πhat_order[end-K+1:end])
 
-    not_used_absorb = sort(πhat_order[1:K-1])
+    not_used_absorb = sort(πhat_order[1:end-K])
     
 
 
@@ -58,7 +58,7 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
     end
 
 
-    α_test, T_test, T0_test = cat_dist(probs[not_used_absorb],probs[used_absorb],used_dist,ω,Int(p1),Int(p2),q)
+    α_test, T_test, T0_test = cat_dist(probs[used_absorb],used_dist,ω,Int(p1),Int(p2),q)
 
 
             

@@ -30,7 +30,7 @@ end
 """
 
 """
-function cat_dist(not_used_probs::Vector{Float64},probs::Vector{Float64},dist::Vector{Any},ω::Float64,p1::Int64,p2::Int64,q::Int64)
+function cat_dist(probs::Vector{Float64},dist::Vector{Any},ω::Float64,p1::Int64,p2::Int64,q::Int64)
 
     merged_T = [dist[i].T for i = 1:length(dist)]
 
@@ -45,7 +45,7 @@ function cat_dist(not_used_probs::Vector{Float64},probs::Vector{Float64},dist::V
     
     TS1S2 = repeat(v, p1)
 
-    @show not_used_probs
+
 
 
 
@@ -66,6 +66,8 @@ function cat_dist(not_used_probs::Vector{Float64},probs::Vector{Float64},dist::V
 
 
     replacement_vector[1:p1,:] .= -sum(T[1,:])./(q-length(dist))
+
+    @show -sum(T[1,:])./(q-length(dist))
 
     @show replacement_vector
 
