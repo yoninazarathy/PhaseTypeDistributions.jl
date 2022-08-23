@@ -30,40 +30,44 @@ end
 """
 
 """
-function cat_dist(probs::Vector{Float64},dist::Vector{Any},ω::Float64,p1::Int64,p2::Int64,q::Int64)
+function cat_dist(not_used_probs::Vector{Float64},probs::Vector{Float64},dist::Vector{Any},ω::Float64,p1::Int64,p2::Int64,q::Int64)
+
     merged_T = [dist[i].T for i = 1:length(dist)]
+
     TS2S2 = cat(merged_T..., dims = (1,2))
 
-    merged_α = [ω*probs[i].*dist[i].α for i = 1:length(dist)]
+    merged_α = [ω.*probs[i].*dist[i].α for i = 1:length(dist)]
 
     merged_T0 = [-1.0.*sum(dist[i].T,dims = 2) for i =1:length(dist)]
 
-    @show merged_T0
-
-    S2T0 = cat(merged_T0...,dims = (1,2))
-
     v = cat(merged_α..., dims = (2,2))
+ 
     
-    @show p1
     TS1S2 = repeat(v, p1)
 
-    TS1S2 = cat(merged_α..., dims = (2,2))
+    @show not_used_probs
+
+
 
 
     Imatrix = Matrix(-ω.*I(Int(p1)))
 
     M = cat(Imatrix,zeros(p2,p1),dims = (1,1))
-
     N = cat(TS1S2,TS2S2,dims = (1,1))
+
 
     T = cat(M,N, dims = (2,2))
 
+    S2T0 = cat(merged_T0...,dims = (1,2))
 
     T0 = cat(zeros(p1,length(dist)),S2T0,dims = (1,1))
 
     replacement_vector = zeros(p1+p2,q-length(dist))
 
-    replacement_vector[1:p1] .= -sum(T[1,:])
+
+    replacement_vector[1:p1,:] .= -sum(T[1,:])./(q-length(dist))
+
+    @show replacement_vector
 
 
     if length(dist) < q
@@ -71,15 +75,15 @@ function cat_dist(probs::Vector{Float64},dist::Vector{Any},ω::Float64,p1::Int64
     end
 
     
-
-
-
-
     α = zeros(1,p1+p2)
     
     α[1:p1] .= 1/p1
 
     α = vec(α)'
+
+    display(T)
+    display(T0)
+    display(α)
 
 
     return  α,T,T0

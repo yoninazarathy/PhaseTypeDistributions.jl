@@ -5,7 +5,7 @@ Create an MAPHDist of dimensions pxq where q is the length of `probs`, `means`, 
 This tries to do a best "moment fit" for the probability of absorbitions, means, and scvs
 
 """
-function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::Vector{Float64}; ω::Float64 = 100.0)
+function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::Vector{Float64}; ω::Float64 = 50.0)
     @show "Constructor based on moments"
 
     q = length(probs)
@@ -30,81 +30,110 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
     K = q-findfirst((x)->x ≤ p-1, [sum(num_phases[k:end]) for k=1:q])+1
     K ∉ (1:q) && error("Not enough phases to start")
 
-    @show num_phases, K, q, p
-
     p2 = sum(num_phases[end-K+1:end])
     p1 = p - p2
 
-    @show num_phases, K, q, p, p1, p2
-
-
     @show num_phases, K, (p,p1,p2)
 
-    dist = []
-    for k = 1:q
-        if sorted_scvs[k]≥1
-            push!(dist,hyper_exp_init(sorted_means[k],sorted_scvs[k]))
+    used_absorb = sort(πhat_order[end-K+1:end])
+
+    not_used_absorb = sort(πhat_order[1:K-1])
+    
+
+
+
+    @show used_absorb, not_used_absorb
+
+
+    used_dist = []
+
+    for k = 1:length(used_absorb)
+        if scvs[used_absorb[k]] ≥ 1
+            push!(used_dist,hyper_exp_init(means[used_absorb[k]],scvs[used_absorb[k]]))
         end
-        if sorted_scvs[k]<1
-            push!(dist,hypo_exp_init(sorted_means[k],sorted_scvs[k]))
+
+        if scvs[used_absorb[k]] <1
+            push!(used_dist,hypo_exp_init(means[used_absorb[k]],scvs[used_absorb[k]]))
         end
     end
 
 
-    used_dist = dist[K:q]
+    α_test, T_test, T0_test = cat_dist(probs[not_used_absorb],probs[used_absorb],used_dist,ω,Int(p1),Int(p2),q)
 
-    @show q
+
+            
+
+
+
+
+
+    # dist = []
+    # for k = 1:q
+    #     if sorted_scvs[k]≥1
+    #         push!(dist,hyper_exp_init(sorted_means[k],sorted_scvs[k]))
+    #     end
+    #     if sorted_scvs[k]<1
+    #         push!(dist,hypo_exp_init(sorted_means[k],sorted_scvs[k]))
+    #     end
+    # end
+
+    # used_phases = πhat_order[K:q]
+
+
+
+
+
     α_test, T_test, T0_test = cat_dist(π[K:q],used_dist,ω,Int(p1),Int(p2),q)
 
-    display(α_test)
-    display(T_test)
-    display(T0_test)
+    # # display(α_test)
+    # # display(T_test)
+    # # display(T0_test)
 
 
-    α = ones(p)'/p
-    T = ones(p,p).*eps()
-    T0 = ones(p,q).*eps()
-    T2 = ones(p,q).*eps() 
+    # α = ones(p)'/p
+    # T = ones(p,p).*eps()
+    # T0 = ones(p,q).*eps()
+    # T2 = ones(p,q).*eps() 
 
 
-    reverse_order = sortperm(πhat_order)
+    # reverse_order = sortperm(πhat_order)
     
-    reversed_dist = dist[reverse_order]
+    # reversed_dist = dist[reverse_order]
 
 
 
-    if p -1 ≥ required_phases
-        α_temp, T_temp, T0_temp = merge_dist(probs,reversed_dist)
-        m,n = model_size(MAPHDist(α_temp, T_temp, T0_temp))
-        α[1:m] = α_temp
-        T[1:m,1:m] = T_temp
-        T0[1:m,1:n] = T0_temp
-    else
-        idx_drop = πhat_order[1:K-1]
-        probs_dropped = probs[eachindex(probs).∈ Ref(idx_drop)]
-        probs_undropped = probs[eachindex(probs) .∉ Ref(idx_drop)]
-        means_dropped = means[eachindex(means).∈ Ref(idx_drop)]
-        reversed_dist_undropped = reversed_dist[eachindex(reversed_dist) .∉ Ref(idx_drop)]
+    # if p -1 ≥ required_phases
+    #     α_temp, T_temp, T0_temp = merge_dist(probs,reversed_dist)
+    #     m,n = model_size(MAPHDist(α_temp, T_temp, T0_temp))
+    #     α[1:m] = α_temp
+    #     T[1:m,1:m] = T_temp
+    #     T0[1:m,1:n] = T0_temp
+    # else
+    #     idx_drop = πhat_order[1:K-1]
+    #     probs_dropped = probs[eachindex(probs).∈ Ref(idx_drop)]
+    #     probs_undropped = probs[eachindex(probs) .∉ Ref(idx_drop)]
+    #     means_dropped = means[eachindex(means).∈ Ref(idx_drop)]
+    #     reversed_dist_undropped = reversed_dist[eachindex(reversed_dist) .∉ Ref(idx_drop)]
 
-        dropped_dist = [hyper_exp_init(sum(probs_dropped.*means_dropped),1.0)]
-        α_temp, T_temp, T0_temp = merge_dist(probs_undropped,reversed_dist_undropped)
+    #     dropped_dist = [hyper_exp_init(sum(probs_dropped.*means_dropped),1.0)]
+    #     α_temp, T_temp, T0_temp = merge_dist(probs_undropped,reversed_dist_undropped)
  
-        m,n = model_size(MAPHDist(α_temp, T_temp, T0_temp))
+    #     m,n = model_size(MAPHDist(α_temp, T_temp, T0_temp))
 
-        for i = 1:m
-            T0[i,:] = sum(T0_temp[i,:]).*probs
-        end
+    #     for i = 1:m
+    #         T0[i,:] = sum(T0_temp[i,:]).*probs
+    #     end
 
-        α[1:m] =α_temp
-        T[1:m,1:m] = T_temp
-        #T0[1:m,1:n]=T0_temp
-    end
+    #     α[1:m] =α_temp
+    #     T[1:m,1:m] = T_temp
+    #     #T0[1:m,1:n]=T0_temp
+    # end
 
-    ### fix T,T0 to be stochastic Matrix due to numerical error in the computation above 
+    # ### fix T,T0 to be stochastic Matrix due to numerical error in the computation above 
 
-    excess = sum(T, dims = 2) + sum(T0, dims = 2)
+    # excess = sum(T, dims = 2) + sum(T0, dims = 2)
 
-    T = T + Diagonal(vec(excess))
+    # T = T + Diagonal(vec(excess))
 
     maph = MAPHDist(α_test,T_test,T0_test)
 
