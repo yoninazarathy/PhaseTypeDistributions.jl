@@ -6,16 +6,15 @@ function test_maph_init()
     desired_means = [2.0, 3.1, 2.3, 4.5, 0.2]
     desired_scvs = [1.3, 1.7, 2.5, 0.4, 0.05]
 
-    p = 10
-    dist  = MAPHDist(p, desired_absorbptions, desired_means, desired_scvs)
+    # dist  = MAPHDist(p, desired_absorbptions, desired_means, desired_scvs)
 
 
-    # for p in 3:5
-    #     dist  = MAPHDist(p, desired_absorbptions, desired_means, desired_scvs)
-    #     @show p
-    #     @show mean(dist)
-    #     @show absorption_probs(dist)
-    # end
+    for p in 3:5
+        dist  = MAPHDist(p, desired_absorbptions, desired_means, desired_scvs)
+        @show p
+        @show mean(dist)
+        @show absorption_probs(dist)
+    end
     # data = [rand(dist) for _ in 1:10^4]
     # pi_est = [count((x)->x.a == i, data)/length(data) for i in 1:5]
     # μ_est = [mean(first.(filter((x)->x.a == i, data))) for i in 1:5] 

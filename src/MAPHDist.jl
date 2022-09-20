@@ -12,25 +12,40 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
     length(means) != q && error("Dimension mismatch")
     length(scvs) != q && error("Dimension mismatch")
    
-    π_order = sortperm(probs)
+    π_order = sortperm(probs,rev = true)
+
+
     π = probs[π_order]
 
+    @show π
+    
     sorted_means = means[π_order]
     sorted_scvs = scvs[π_order]
+
+    @show sorted_means
+
 
     sorted_means = matched_mean.(sorted_means, ω)
     sorted_scvs = matched_scv.(sorted_scvs,sorted_means, ω)
 
     num_phases = [sorted_scvs[i] ≥ 1.0 ? 2 : ceil(Int, 1/sorted_scvs[i]) for i in 1:q]
     required_phases = sum(num_phases)
-    
-    K = q - findfirst((x)->x ≤ p-1, [sum(num_phases[k:end]) for k=1:q]) + 1
+
+    if required_phases ≤ p-1
+        K = q
+    elseif num_phases[1] ≤ p-1 < required_phases
+        K = findlast((x)-> sum(x)≤p-1 ,  [sum(num_phases[1:k]) for k=1:q])
+    elseif p-1 < num_phases[1] 
+        K = 0
+    end
+
+
     K ∉ (1:q) && error("Not enough phases to start")
 
-    p2 = sum(num_phases[end-K+1:end])
+    p2 = sum(num_phases[1:K])
     p1 = p - p2
 
-    used_absorb = π_order[end-K+1:end]
+    used_absorb = π_order[1:K]
 
     @show K, num_phases, p2, p1, used_absorb, π_order, π[used_absorb]
     
@@ -44,11 +59,15 @@ function MAPHDist(p::Int, probs::Vector{Float64}, means::Vector{Float64}, scvs::
     end
 
 
-    α_test, T_test, T0_test = cat_dist(π[used_absorb],used_dist,ω,Int(p1),Int(p2),q)
+    α_test, T_test, T0_test = cat_dist(π[1:K],used_dist,ω,Int(p1),Int(p2),q)
 
 
 
     maph = MAPHDist(α_test,T_test,T0_test)
+
+    display(maph.T)
+    display(maph.T0)
+    display(maph.α)
 
     return maph
 
