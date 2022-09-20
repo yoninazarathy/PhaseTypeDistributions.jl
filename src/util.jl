@@ -30,7 +30,7 @@ end
 """
 
 """
-function cat_dist(probs::Vector{Float64},dist::Vector{Any},ω::Float64,p1::Int64,p2::Int64,q::Int64)
+function cat_dist(probs::Vector{Float64}, dist::Vector{PHDist}, ω::Float64, p1::Int64,p2::Int64,q::Int64)
 
     merged_T = [dist[i].T for i = 1:length(dist)]
 
@@ -42,19 +42,12 @@ function cat_dist(probs::Vector{Float64},dist::Vector{Any},ω::Float64,p1::Int64
 
     v = cat(merged_α..., dims = (2,2))
  
-    
     TS1S2 = repeat(v, p1)
-
-
-
-
-
 
     Imatrix = Matrix(-ω.*I(Int(p1)))
 
     M = cat(Imatrix,zeros(p2,p1),dims = (1,1))
     N = cat(TS1S2,TS2S2,dims = (1,1))
-
 
     T = cat(M,N, dims = (2,2))
 
@@ -67,7 +60,6 @@ function cat_dist(probs::Vector{Float64},dist::Vector{Any},ω::Float64,p1::Int64
 
     replacement_vector[1:p1,:] .= -sum(T[1,:])./(q-length(dist))
 
-
     if length(dist) < q
         T0 = cat(T0,replacement_vector ,dims = (2,2))
     end
@@ -79,9 +71,7 @@ function cat_dist(probs::Vector{Float64},dist::Vector{Any},ω::Float64,p1::Int64
 
     α = vec(α)'
 
-
     return  α,T,T0
-
 end
 
 
