@@ -1,0 +1,54 @@
+"""
+"""
+function test_maph_perturbation()
+   
+    λ12, λ21 =  1.0, 1.0
+    μ13, μ14, μ15, μ23, μ24, μ25 = 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 
+    
+    E1 = [0 λ45;
+    λ54 0]
+
+    # E = E1 + -diagm(vec(sum(E1,dims=2)))
+
+    # F = [μ13 μ14 μ15; μ23 μ24 μ25]
+
+    # D = -diagm(vec(sum(F,dims=2)))
+    
+
+    absorb1 = []
+    absorb2 = []
+    absorb3 =[]
+    eps = LinRange(0.0,1,1000)
+
+    for ε in eps
+        E = [-2+2*ε*(1-ε) 2-2*ε*(1-ε); 3 -3]
+        F = [3(1-ε) 5(1-ε) 0; 0 0 4]
+        D = -diagm(vec(sum(F,dims=2)))
+
+        hitting_prob = -inv(E+D)*(F)
+        push!(absorb1,hitting_prob[2,1])
+        push!(absorb2,hitting_prob[2,2])
+        push!(absorb3,hitting_prob[2,3])
+    end
+
+
+    # hitting_prob = -inv(E+ε*D)*(ε*F)
+    # Dhat = inv(E+D)*D
+    # Ehat = inv(E+D)*E
+
+    
+    # display(E)
+    # display(D)
+    # display(F)
+    # display(hitting_prob)
+
+    p1 = plot(eps,absorb1)
+    p2 = plot(eps,absorb2)
+    p3 = plot(eps,absorb3)
+
+    # display(plot(p2))
+
+    display(plot(p1,p2,p3,layout = (1,3),label = ["2 - 1" "2 - 2" "2 -3"]))
+
+    return true
+end

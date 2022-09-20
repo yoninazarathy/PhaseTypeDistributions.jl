@@ -1,6 +1,7 @@
 #This is a temporary script while developing
 using Test
 using Pkg
+using Plots
 Pkg.activate((@__DIR__) * "/..")
 
 include("../src/PhaseTypeDistributions.jl")
@@ -17,7 +18,8 @@ Random.seed!(2)
 #test hyperexp_test()
 #@test maph_moments_and_rand_test(;N=1000000)
 # @test test_fit_example1(;sim_runs=10^2)
-@test test_maph_init()
+#@test test_maph_init()
+@test test_maph_perturbation()
 #@test full_trace_sufficient_stats_test()
 #@test sufficient_stats_test()
 

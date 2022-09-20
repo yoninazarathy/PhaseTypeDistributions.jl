@@ -67,10 +67,6 @@ function cat_dist(probs::Vector{Float64},dist::Vector{Any},ω::Float64,p1::Int64
 
     replacement_vector[1:p1,:] .= -sum(T[1,:])./(q-length(dist))
 
-    @show -sum(T[1,:])./(q-length(dist))
-
-    @show replacement_vector
-
 
     if length(dist) < q
         T0 = cat(T0,replacement_vector ,dims = (2,2))
@@ -83,10 +79,6 @@ function cat_dist(probs::Vector{Float64},dist::Vector{Any},ω::Float64,p1::Int64
 
     α = vec(α)'
 
-    display(T)
-    display(T0)
-    display(α)
-
 
     return  α,T,T0
 
@@ -96,16 +88,16 @@ end
 
 
 
-function absorption_vector_create(T1::Matrix{Float64},prob::Vector{Float64})
-    p = length(T)
-    q = length(probs)
-    T0 = zeros((p,q))
+# function absorption_vector_create(T1::Matrix{Float64},prob::Vector{Float64})
+#     p = length(T)
+#     q = length(probs)
+#     T0 = zeros((p,q))
 
-    for i = 1:p
-        T0[i,:] = T1[i,1].*probs
-    end
+#     for i = 1:p
+#         T0[i,:] = T1[i,1].*probs
+#     end
 
-end
+# end
 
 
 

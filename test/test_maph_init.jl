@@ -2,19 +2,25 @@
 QQQQ
 """
 function test_maph_init()
-    desired_absorbptions = [0.1, 0.3, 0.5, 0.08, 0.02]
+    desired_absorbptions = [0.3, 0.2, 0.4, 0.08, 0.02]
     desired_means = [2.0, 3.1, 2.3, 4.5, 0.2]
     desired_scvs = [1.3, 1.7, 2.5, 0.4, 0.05]
 
-    dist  = MAPHDist(8, desired_absorbptions, desired_means, desired_scvs)
+    p = 10
+    dist  = MAPHDist(p, desired_absorbptions, desired_means, desired_scvs)
 
-    data = [rand(dist) for _ in 1:10^4]
-    pi_est = [count((x)->x.a == i, data)/length(data) for i in 1:5]
-    μ_est = [mean(first.(filter((x)->x.a == i, data))) for i in 1:5] 
 
-    @show pi_est
-    @show μ_est
+    # for p in 3:5
+    #     dist  = MAPHDist(p, desired_absorbptions, desired_means, desired_scvs)
+    #     @show p
+    #     @show mean(dist)
+    #     @show absorption_probs(dist)
+    # end
+    # data = [rand(dist) for _ in 1:10^4]
+    # pi_est = [count((x)->x.a == i, data)/length(data) for i in 1:5]
+    # μ_est = [mean(first.(filter((x)->x.a == i, data))) for i in 1:5] 
 
+  
 
 
     # for p in [2, 5, 10, 30]
