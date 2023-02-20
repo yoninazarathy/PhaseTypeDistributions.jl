@@ -34,8 +34,8 @@ function MAPHDist(  p::Int,
     if required_phases ≤ p-1
         K = q
     elseif num_phases[1] ≤ p-1 < required_phases
-        K = findlast((x)-> sum(x)≤p-1 , accumulate(+,num_phases)) # [sum(num_phases[1:k]) for k=1:q])
-    else #p-1 < num_phases[1] 
+        K = findlast((x)-> sum(x)≤p-1 , accumulate(+,num_phases))
+    else #Case of p-1 < num_phases[1]
         K = 0
     end
 

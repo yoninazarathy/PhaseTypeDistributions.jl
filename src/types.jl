@@ -6,22 +6,46 @@ mutable struct PHDist
     T::Matrix{Float64}
 end
 
+
 """
 QQQQ
 """
 mutable struct MAPHDist
-    α::Adjoint{Float64, Vector{Float64}}
-    T::Matrix{Float64}
-    T0::Matrix{Float64}
+    
+    #dimensions
+    m::Int #number of transient phases
+    n::Int #number of abosrbing states 
+
+    #used for both parameterizations
+    α::Adjoint{Float64, Vector{Float64}} #dimension at m
+
+    #First parameterization
+    T::Matrix{Float64} #dimension at mxm. The diagonal elements of this matrix are "q" of the second parameterization
+    T0::Matrix{Float64} #dimension at mxn
+
+    #second parameterization
+    R::Matrix{Float64} #dimension at mxn
+    P::Vector{Matrix{Float64}} #a vector of length n, with elements at dimension mxm
 
     function MAPHDist(α::Adjoint{Float64, Vector{Float64}}, T::Matrix{Float64},T0::Matrix{Float64})
         @assert size(T)[1] == size(T0)[1]
-
-        ## todo clean..
-        #@assert sum(sum(T, dims=2) + sum(T0, dims=2)) ≈ 0.0
         @assert isapprox(sum(sum(T, dims=2) + sum(T0, dims=2)),0,atol = 10e-5)
         return new(α, T, T0)
     end
+end
+
+"""
+QQQQ -doc to do
+"""
+function update_params_1to2(dist::MAPHDist)
+
+end
+
+"""
+QQQQ -doc to do
+"""
+function update_params_2to1(dist::MAPHDist)
+
 end
 
 """
