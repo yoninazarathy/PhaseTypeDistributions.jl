@@ -8,6 +8,27 @@ end
 
 
 """
+Takes T, T0 of first parameterization and returns matrices of second parameterization.
+"""
+function R_P_from_T_T0(T, T0)
+    m, n  = size(T0)
+    R = -inv(T)*T0
+    P = [[-T[i,j] * R[j,k] / T[i,i] / R[i,k] for i in 1:m, j in 1:m] for k in 1:n]
+    return R, P
+end
+
+"""
+Takes R, P, q of second parameterization and returns matrices of first parameterization.
+"""
+function T_T0_from_R_P_q(q::Vector{Float64}, R::Matrix{Float64}, P::Vector{Matrix{Float64}})
+    m = length(q)
+    k = 1 #QQQQ this is some fixed k (abosrbing state - as conversion will work the same for all k)
+    T = [i==j ? -q[i] : P[k][i,j] * R[i,k] / R[j,k] for i in 1:m, j in 1:m]
+    T0 = -T * R
+    return T, T0
+end
+
+"""
 QQQQ
 """
 mutable struct MAPHDist
@@ -20,32 +41,55 @@ mutable struct MAPHDist
     α::Adjoint{Float64, Vector{Float64}} #dimension at m
 
     #First parameterization
-    T::Matrix{Float64} #dimension at mxm. The diagonal elements of this matrix are "q" of the second parameterization
+    T::Matrix{Float64} #dimension at mxm. The negative of the diagonal elements 
+                       #of this matrix are "q" of the second parameterization
     T0::Matrix{Float64} #dimension at mxn
 
     #second parameterization
     R::Matrix{Float64} #dimension at mxn
     P::Vector{Matrix{Float64}} #a vector of length n, with elements at dimension mxm
 
-    function MAPHDist(α::Adjoint{Float64, Vector{Float64}}, T::Matrix{Float64},T0::Matrix{Float64})
-        @assert size(T)[1] == size(T0)[1]
-        @assert isapprox(sum(sum(T, dims=2) + sum(T0, dims=2)),0,atol = 10e-5)
-        return new(α, T, T0)
+    """
+    Constructor using the first parameterization.
+    """
+    function MAPHDist(α::Adjoint{Float64, Vector{Float64}}, T::Matrix{Float64}, T0::Matrix{Float64})
+        m = length(α)
+        n = size(T0)[2]
+        size(T) != (m, m) && error("Wrong size for T")
+        size(T0) != (m, n) && error("Wrong size for T0")
+        !isapprox(sum(sum(T, dims=2) + sum(T0, dims=2)),0,atol = 10e-5) && error("Non-generator matrix")
+
+        return new(m, n, α, T, T0, R_P_from_T_T0(T, T0)...)
+    end
+
+    """
+    Constructor using the second parameterization.
+    """
+    function MAPHDist(α::Adjoint{Float64, Vector{Float64}}, q::Vector{Float64}, R::Matrix{Float64}, P::Vector{Matrix{Float64}})
+        m = length(α)
+        n = size(R)[2]
+        size(R) != (m, n) && error("Wrong size for R")
+        length(q) != m && error("Wrong length for q")
+        length(P) != n && error("Wrong length for P")
+        #QQQQ todo - more checks for stochastic matrix, etc...
+        T, T0 = T_T0_from_R_P_q(q, R, P)
+        return new(m, n, α, T_T0_from_R_P_q(q, R, P)...,R, P)
     end
 end
 
+
 """
 QQQQ -doc to do
 """
-function update_params_1to2(dist::MAPHDist)
-
+function update_params_1to2!(dist::MAPHDist)
+    dist.R, dist.P = R_P_from_T_T0(dist.T, dist.T0)
 end
 
 """
 QQQQ -doc to do
 """
-function update_params_2to1(dist::MAPHDist)
-
+function update_params_2to1!(dist::MAPHDist)
+    dist.T, dist.T0 = T_T0_from_R_P_q(-diag(dist.T), dist.R, dist.P)
 end
 
 """

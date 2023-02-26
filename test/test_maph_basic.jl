@@ -13,8 +13,6 @@ function maph_moments_and_rand_test(;N=1000)
     μ_est = [mean(first.(filter((x)->x.a == i, data))) for i in 1:3]
 
     
-
-    
     σ2_est = [var(first.(filter((x)->x.a == i, data))) for i in 1:3]
 
     @show mean(maph), μ_est
@@ -37,3 +35,4 @@ function maph_moments_and_rand_test(;N=1000)
 
     return true
 end
+
