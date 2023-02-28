@@ -13,7 +13,8 @@ Takes T, T0 of first parameterization and returns matrices of second parameteriz
 function R_P_from_T_T0(T, T0)
     m, n  = size(T0)
     R = -inv(T)*T0
-    P = [[-T[i,j] * R[j,k] / T[i,i] / R[i,k] for i in 1:m, j in 1:m] for k in 1:n]
+    P = [[i != j ? -T[i,j] * R[j,k] / T[i,i] / R[i,k] : 0 for i in 1:m, j in 1:m] for k in 1:n]
+                    #(T[i,j]/(-T[i,i]))*(R[j,k]/R[i,k])
     return R, P
 end
 
@@ -23,7 +24,7 @@ Takes R, P, q of second parameterization and returns matrices of first parameter
 function T_T0_from_R_P_q(q::Vector{Float64}, R::Matrix{Float64}, P::Vector{Matrix{Float64}})
     m = length(q)
     k = 1 #QQQQ this is some fixed k (abosrbing state - as conversion will work the same for all k)
-    T = [i==j ? -q[i] : P[k][i,j] * R[i,k] / R[j,k] for i in 1:m, j in 1:m]
+    T = [i==j ? -q[i] : q[i] * P[k][i,j] * R[i,k] / R[j,k] for i in 1:m, j in 1:m]
     T0 = -T * R
     return T, T0
 end
