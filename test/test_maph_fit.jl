@@ -10,7 +10,7 @@ function test_fit_example1(;sim_runs=10^2)
 
     maph = MAPHDist(initial_dist',T_example, T0_example)
 
-    @show maph
+    # @show maph
    
     absorbtion_probs_of_true_dist = absorption_probs(maph)
     mean_of_true_dist = mean(maph)
@@ -27,7 +27,6 @@ function test_fit_example1(;sim_runs=10^2)
     end
 
     estimated_dist = fit_maph(times, absorbing_states, 5, max_iter = 1,ω=100.0)
-
 
     absorbtion_probs_of_estimated_dist = absorption_probs(estimated_dist)
     mean_of_estimated_dist = mean(estimated_dist)

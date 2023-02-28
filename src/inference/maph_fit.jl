@@ -32,6 +32,9 @@ QQQQ
 """
 #Maybe rename this function to "maximization step..." or similar
 function maximum_likelihood_estimate(p::Int, q::Int, ss::MAPHSufficientStats)
+
+    #QQQQ pickup here next time.... (from eq 16)
+
     α_next = max.(ss.B,0)
     t_next = max.(ss.N[:,1:q] ./ ss.Z,0)
 
@@ -63,23 +66,29 @@ end
 """
 Fits ... QQQQ
 """
-function fit_maph(times::Vector{Float64}, absorbing_states::Vector{Int}, p::Int; max_iter::Int = 100,ω::Float64)
-    @assert length(times) == length(absorbing_states) "Vector of times and absorbing states mismatch in length"
+function fit_maph(  times::Vector{Float64}, 
+                    absorbing_states::Vector{Int}, 
+                    p::Int; 
+                    max_iter::Int = 100, 
+                    ω::Float64 = 10)::MAPHDist
+
+    length(times) != length(absorbing_states) && error("Vector of times and absorbing states mismatch in length")
     unique_absorbing_states = unique(absorbing_states)
     q = length(unique_absorbing_states)
-    @assert minimum(unique_absorbing_states) == 1 && maximum(unique_absorbing_states) == q  "Mismatch with absorbing states"
+    (minimum(unique_absorbing_states) != 1 || maximum(unique_absorbing_states) != q) && error("Mismatch with absorbing states")
     n = length(times)
     print("Fitting MAPH with p=$p hidden states, q=$q absorbing states, and n=$n observations")
 
+    #compute descriptive stats
     ds = compute_descriptive_stats(times, absorbing_states)
     
-    @show ds
-    dist = MAPHDist(p, ds..., ω) #Moment based initilization...
-
-    @show absorption_probs(dist)
+    #construct a moment based initialization
+    dist = MAPHDist(p, ds...; ω) #Moment based 
     
     iter = 1
     while iter < max_iter
+
+        continue; #return to top QQQQ
 
         #QQQQ - refactor next couple of lines...
 
@@ -87,7 +96,7 @@ function fit_maph(times::Vector{Float64}, absorbing_states::Vector{Int}, p::Int;
         computed_ss = MAPHSufficientStats[]
         for i = 1:n
             obs = (y = times[i], a = absorbing_states[i])
-            ss_i = sufficient_stats(obs,dist)
+            ss_i = sufficient_stats(obs, dist)
             push!(computed_ss, ss_i)
         end
 

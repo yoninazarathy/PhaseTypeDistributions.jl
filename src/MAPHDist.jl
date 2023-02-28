@@ -49,7 +49,7 @@ function MAPHDist(  p::Int,
     #permute T0 back to the given order
     T0 = T0[:,sortperm(π_order)]
 
-    return MAPHDist(α, T,T0)
+    return MAPHDist(α, T, T0)
 end
 
 
