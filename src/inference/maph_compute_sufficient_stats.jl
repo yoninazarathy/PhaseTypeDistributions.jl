@@ -3,8 +3,8 @@
 
 
 
-function very_crude_c_solver(y::Float64,i::Int,j::Int,k::Int,maph::MAPHDist)
-    quadgk(u -> (maph.α*exp(maph.T*u))[i]*(exp(maph.T*(y-u))*maph.T0[:,j])[k] , 0, y, rtol=1e-8) |> first
+function very_crude_c_solver(y::Float64, i::Int, j::Int, k::Int, maph::MAPHDist)
+    quadgk(u -> (maph.α * exp(maph.T*u))[i] * (exp(maph.T*(y-u))*maph.T0[:,k])[j] , 0, y, rtol=1e-8) |> first
 end
 
 
@@ -63,24 +63,29 @@ end
 
 
 
+"""
+Compute the expected value of the sufficient stats. (QQQQ maybe change name of function)
+"""
+function sufficient_stats(  observation::SingleObs, 
+                            maph::MAPHDist; 
+                            c_solver = very_crude_c_solver)::MAPHSufficientStats
 
-function sufficient_stats(observation::SingleObs, maph::MAPHDist; c_solver = very_crude_c_solver)::MAPHSufficientStats
     stats = MAPHSufficientStats(maph)
 
-    p, q = model_size(maph)
+    m, n = model_size(maph)
+    
+    a(y::Float64) = maph.α * exp(maph.T*y)
+    b(y::Float64, k::Int) = exp(maph.T*y) * maph.T0[:,k]
+    c(y::Float64, i::Int, j::Int, k::Int) = very_crude_c_solver(y, i, j, k, maph)
 
-    a(y::Float64) = maph.α*exp(maph.T*y)
-    b(y::Float64,j::Int) = exp(maph.T*y)*maph.T0[:,j]
-    c(y::Float64,i::Int,j::Int,k::Int) = very_crude_c_solver(y,i,j,k,maph)
 
+    # D = Diagonal(maph.T)
+    # PT = I-inv(Diagonal(maph.T))*maph.T
+    # PT0 = -inv(Diagonal(maph.T))*maph.T0
+    # A = inv(I-PT)*PT0
+    # PA = maph.α*A
 
-    D = Diagonal(maph.T)
-    PT = I-inv(Diagonal(maph.T))*maph.T
-    PT0 = -inv(Diagonal(maph.T))*maph.T0
-    A = inv(I-PT)*PT0
-    PA = maph.α*A
-
-    EB(y::Float64, i::Int, j::Int) = maph.α[i] * b(y,j)[i]*PA[j]/ (maph.α*b(y,j))
+    EB(y::Float64, i::Int, k::Int) = maph.α[i] * b(y, k)[i] / (maph.α * b(y, k))
     EZ(y::Float64, i::Int, j::Int,k::Int) = c(y,i,j,k)*PA[j]/(maph.α*b(y,j))
     ENT(y::Float64,i::Int,j::Int,k::Int) = i !=k ? maph.T[i,:].*c(y,i,j,k)*PA[j]/(maph.α*b(y,j)) : zeros(p)
     ENA(y::Float64,i::Int,j::Int) = PA[j]*a(y)[i]*maph.T0[i,j]/(maph.α*b(y,j))

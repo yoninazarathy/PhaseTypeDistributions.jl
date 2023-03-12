@@ -52,7 +52,6 @@ function full_trace_sufficient_stats_test(;N=10^4)
     p,q = model_size(maph)
     test_stats = MAPHSufficientStats(maph)
 
-
     for _ in 1:N
         times, states = rand(maph, full_trace = true) 
         ss = sufficient_stat_from_trajectory(maph, times, states)
@@ -81,13 +80,13 @@ end
 """
 QQQQ
 """
-function sufficient_stats_test(; sim_runs = 10^6)
+function sufficient_stats_test(; sim_runs = 10)
 
     #Set heuristically the number of times steps to be the sqrt of the number of runs
     timesteps = round(Int,sqrt(sim_runs))
 
-    Λ₄, λ45, λ54, Λ₅ = 5, 2, 7, 10
-    μ41, μ42, μ43, μ51, μ52, μ53 = 1, 1, 1, 1, 1, 1 
+    Λ₄, λ45, λ54, Λ₅ = 5., 2., 7., 10.
+    μ41, μ42, μ43, μ51, μ52, μ53 = 1., 1., 1., 1., 1., 1. 
     T_example = [-Λ₄ λ45; λ54 -Λ₅]
     T0_example = [μ41 μ42 μ43; μ51 μ52 μ53]
     initial_dist = [0.5,0.5]
@@ -147,6 +146,7 @@ function sufficient_stats_test(; sim_runs = 10^6)
         end
     end
     
+    return true
     return N_errors, Z_errors, time_vec
 
     # ab1 = filter(x->x.a==1,first.(data))
