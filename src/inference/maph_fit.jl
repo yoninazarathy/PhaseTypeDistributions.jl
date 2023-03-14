@@ -12,6 +12,8 @@ function sufficient_stat_from_trajectory(d::MAPHDist, sojourn_times::Array{Float
 
     ss =  MAPHSufficientStats(d)
 
+    @show ss
+
 
     for s = 1:p
         if states[1] == transient_states[s]
@@ -30,6 +32,19 @@ end
 """
 QQQQ
 """
+
+function maxi_maxization_step(ss::MAPHSufficientStats)
+    """
+    using maph stats to compute the next iteration of the MLE
+    """
+    α_next = max.(ss.B,0)
+
+    
+    return true
+
+
+
+
 #Maybe rename this function to "maximization step..." or similar
 function maximum_likelihood_estimate(p::Int, q::Int, ss::MAPHSufficientStats)
 
