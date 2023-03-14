@@ -99,7 +99,9 @@ QQQQ
 mutable struct MAPHSufficientStats
     B::Vector{Float64} #initial starts
     Z::Vector{Float64} #time spent
-    N::Matrix{Float64} #transitions
+    M::Matrix{Float64} #transitions between transient states
+    N::Matrix{Float64} #transitions between transient to abosrbing states
+
     MAPHSufficientStats(B::Vector{Float64}, Z::Vector{Float64}, N::Matrix{Float64}) = new(B,Z,N)
     function MAPHSufficientStats(maph::MAPHDist) 
         p, q = model_size(maph)

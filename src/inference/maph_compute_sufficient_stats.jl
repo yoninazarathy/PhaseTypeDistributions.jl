@@ -86,9 +86,9 @@ function sufficient_stats(  observation::SingleObs,
     # PA = maph.α*A
 
     EB(y::Float64, i::Int, k::Int) = maph.α[i] * b(y, k)[i] / (maph.α * b(y, k))
-    EZ(y::Float64, i::Int, k::Int) = c(y,i,i,k)/(maph.α*b(y,k))
-    ENT(y::Float64,i::Int,j::Int,k::Int) = i !=k ? maph.T[i,j].*c(y,i,j,k)/(maph.α*b(y,k)) : zeros(p)
-    ENA(y::Float64,i::Int,j::Int) = a(y)[i]*maph.T0[i,k]/(maph.α*b(y,k))
+    EZ(y::Float64, i::Int, k::Int) = c(y, i, i, k) / (maph.α * b(y,k))
+    ENT(y::Float64, i::Int, j::Int, k::Int) = i != j ? maph.T[i,j] .* c(y, i, j, k) / (maph.α * b(y,k)) : zeros(m)
+    ENA(y::Float64, i::Int, k::Int) = a(y)[i] * maph.T0[i,k] / (maph.α * b(y,k))
 
 
     ### stop here
