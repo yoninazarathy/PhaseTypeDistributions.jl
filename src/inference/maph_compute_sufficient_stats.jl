@@ -87,24 +87,34 @@ function sufficient_stats(  observation::SingleObs,
 
     EB(y::Float64, i::Int, k::Int) = maph.α[i] * b(y, k)[i] / (maph.α * b(y, k))
     EZ(y::Float64, i::Int, k::Int) = c(y, i, i, k) / (maph.α * b(y,k))
-    ENT(y::Float64, i::Int, j::Int, k::Int) = i != j ? maph.T[i,j] .* c(y, i, j, k) / (maph.α * b(y,k)) : zeros(m)
-    ENA(y::Float64, i::Int, k::Int) = a(y)[i] * maph.T0[i,k] / (maph.α * b(y,k))
+    ENT(y::Float64, i::Int, j::Int, k::Int) = i != j ? maph.T[i,j] .* c(y, i, j, k) / (maph.α * b(y,k)) : 0
+    ENA(y::Float64, i::Int, j::Int, k::Int) = j == k ? a(y)[i] * maph.T0[i,k] / (maph.α * b(y,k)) : 0 
 
 
     ### stop here
-    stats.B = [sum([EB(observation.y, i, j) for j = 1:q]) for i =1:p]
-    stats.Z = [sum([EZ(observation.y,i,j,i) for j =1:q]) for i = 1:p]
+    stats.B = [EB(observation.y, i, observation.a) for i =1:m]
 
-    for i = 1:p
-        for k = (q+1):(q+p)
-            V = sum([ENT(observation.y,i,j,k-q) for j in 1:q])
-            stats.N[i,k] = V[k-q]
-        end
+    # @show stats.B
 
-        for j = 1:q
-            stats.N[i,j] = ENA(observation.y,i,j)
-        end
-    end
+    stats.Z = [EZ(observation.y, i, observation.a) for i =1:m]
+
+    stats.M = [ENT(observation.y, i, j, observation.a) for i =1:m, j = 1:m]
+
+    stats.N = [ENA(observation.y, i, j,observation.a) for i =1:m, j = 1:n]
+
+
+   
+
+    # for i = 1:p
+    #     for k = (q+1):(q+p)
+    #         V = sum([ENT(observation.y,i,j,k-q) for j in 1:q])
+    #         stats.N[i,k] = V[k-q]
+    #     end
+
+    #     for j = 1:q
+    #         stats.N[i,j] = ENA(observation.y,i,j)
+    #     end
+    # end
 
     return stats
 end

@@ -33,14 +33,15 @@ end
 QQQQ
 """
 
-function maxi_maxization_step(ss::MAPHSufficientStats)
-    """
-    using maph stats to compute the next iteration of the MLE
-    """
-    α_next = max.(ss.B,0)
+# function maxi_maxization_step(ss::MAPHSufficientStats)
+#     """
+#     using maph stats to compute the next iteration of the MLE
+#     """
+#     α_next = max.(ss.B,0)
 
     
-    return true
+#     return true
+# end
 
 
 

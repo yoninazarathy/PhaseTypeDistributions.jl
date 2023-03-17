@@ -102,10 +102,10 @@ mutable struct MAPHSufficientStats
     M::Matrix{Float64} #transitions between transient states
     N::Matrix{Float64} #transitions between transient to abosrbing states
 
-    MAPHSufficientStats(B::Vector{Float64}, Z::Vector{Float64}, N::Matrix{Float64}) = new(B,Z,N)
+    MAPHSufficientStats(B::Vector{Float64}, Z::Vector{Float64}, M::Matrix{Float64},  N::Matrix{Float64}) = new(B,Z,M,N)
     function MAPHSufficientStats(maph::MAPHDist) 
-        p, q = model_size(maph)
-        new(zeros(p), zeros(p), zeros(p,p+q))
+        m, n = model_size(maph)
+        new(zeros(m), zeros(m), zeros(m,m),zeros(m,n))
     end
 end
 
@@ -119,12 +119,17 @@ QQQQ
 """
 MAPHObsData = Vector{SingleObs}
 
-+(ss1::MAPHSufficientStats, ss2::MAPHSufficientStats) = MAPHSufficientStats(ss1.B+ss2.B, ss1.Z+ss2.Z, ss1.N+ ss2.N)
-/(ss::MAPHSufficientStats,n::Real) = MAPHSufficientStats(ss.B/n,ss.Z/n,ss.N/n)
-/(ss1::MAPHSufficientStats,ss2::MAPHSufficientStats) = MAPHSufficientStats(ss1.B ./ ss2.B, ss1.Z ./  ss2.Z, ss1.N ./  ss2.N)
--(ss1::MAPHSufficientStats, ss2::MAPHSufficientStats) = MAPHSufficientStats(ss1.B-ss2.B, ss1.Z-ss2.Z, ss1.N - ss2.N)
++(ss1::MAPHSufficientStats, ss2::MAPHSufficientStats) = MAPHSufficientStats(ss1.B+ss2.B, ss1.Z+ss2.Z, ss1.M+ ss2.M, ss1.N+ss2.N)
+/(ss::MAPHSufficientStats,n::Real) = MAPHSufficientStats(ss.B/n,ss.Z/n,ss.N/n, ss.M/n,ss.N/n)
+/(ss1::MAPHSufficientStats,ss2::MAPHSufficientStats) = MAPHSufficientStats(ss1.B ./ ss2.B, ss1.Z ./  ss2.Z, ss1.M ./  ss2.M,  ss1.N ./  ss2.N)
+-(ss1::MAPHSufficientStats, ss2::MAPHSufficientStats) = MAPHSufficientStats(ss1.B-ss2.B, ss1.Z-ss2.Z, ss1.M - ss2.M, ss1.N - ss2.N)
 
-"""
+# sum(ss_list::Vector{MAPHSufficientStats}) = foldl(+, ss_list)
+# mean(ss_list::Vector{MAPHSufficientStats}) = sum(ss_list) / length(ss_list)
+
+
+
+""""
 QQQQ - put doc string
 """
 model_size(ph::PHDist) = length(ph.α)
