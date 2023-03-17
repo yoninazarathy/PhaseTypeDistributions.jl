@@ -1,41 +1,21 @@
 """
 Returns an array of data filtered according to absorbing state being the index of the array.
 """
-# function absorb_filter_data(data, maph::MAPHDist)
-#     p, q = model_size(maph)
-#     filter_data = []
-
-#     for i = 1:q
-#         temp_data = filter(data) do obs first(obs).a == i end
-#         push!(filter_data, temp_data)
-#     end    
-
-#     #QQQQ this whole function can be just this one line ??
-#     # [filter((obs)->first(obs).a == i, data) for i in 1:q]
-#     return filter_data
-# end
-
+absorb_filter_data(data, maph::MAPHDist) = [filter((obs)->first(obs).a == i, data) for i in 1:maph.n]
 
 """
-Returns an array of data filtered according to the sojourn time being less than the index of the time array.
+Returns an array of data filtered according to the sojourn time being less than the index of the time array. 
 """
-# function time_filter_data(data, n::Int64)
+function time_filter_data(data, num_bins::Int64)
 
-#     times = ((d)->first(d).y).(data)
-#     min_time = quantile(times, 0.05)
-#     max_time = quantile(times, 0.95)
-#     @show min_time, max_time
-#     time_vec = Array(LinRange(min_time, max_time, n)) #QQQQ - cleanup later
+    times = ((d)->first(d).y).(data)
+    min_time = quantile(times, 0.05)
+    max_time = quantile(times, 0.95)
+    time_vec = vcat([0], Array(LinRange(min_time, max_time, num_bins)), [Inf])
 
-#     filter_data = []
-
-#     for i = 1:(n-1)
-#         temp_data = filter(data) do obs first(obs).y ≥ time_vec[i] && first(obs).y < time_vec[i+1] end 
-#         push!(filter_data,temp_data)
-#     end    
-
-#     return filter_data, time_vec
-# end
+    #return an array of tuples where the first entry of each tuple is the mean time and the other has the observations
+    return [ (mean(time_vec[(j-1):j]), filter((obs)->(time_vec[j-1] ≤ first(obs).y < time_vec[j]), data)) for j in 2:length(time_vec)]
+end
 
 """
 Test the sufficient stats with full trace data
@@ -92,36 +72,43 @@ function sufficient_stats_test(; sim_runs = 100)
 
     maph = MAPHDist(initial_dist', T_example, T0_example)
 
-
     m,n = model_size(maph)
    
     data = []
     # full_trace =[]
 
-    
     @showprogress "Simulating data" for i in 1:sim_runs
         times, states = rand(maph, full_trace = true) 
         # push!(full_trace, (times,states))
         push!(data, (observation_from_full_traj(times,states),i))
     end
 
-    display(data)
-    @show length(data)
+    # display(data)
+    # @show length(data)
 
     computed_stats = []
 
     @showprogress "Checking sufficient stats" for i in 1:length(data)
         obs = first(data[i])
-        @show obs.y, obs.a
+        # @show obs.y, obs.a
 
         computed_ss = sufficient_stats(obs, maph)
 
         push!(computed_stats, computed_ss)
-
     end
 
+    # display(computed_stats)
+    # @show mean(computed_stats)
 
-    display(computed_stats)
+    absorbed_filtered_data_vector = absorb_filter_data(data, maph)
+    full_filtered_data = time_filter_data.(absorbed_filtered_data_vector, 10)
+
+    for (i,absorbed_filtered) in enumerate(full_filtered_data)
+        for absorbed_time in absorbed_filtered
+            @show i, absorbed_time[1], last.(absorbed_time[2])
+            # @show mean(first.(absorbed_time[2]))
+        end
+    end
 
     # Z_errors = Float64[]
     # N_errors = Float64[]
@@ -130,31 +117,31 @@ function sufficient_stats_test(; sim_runs = 100)
     println("\n start initialization...")
 
     # @showprogress "Checking sufficient stats" for i in 1:length(time_bin)
-    #     ss_i = MAPHSufficientStats[]
-    #     for trace in full_trace[last.(time_bin[i])]
-    #         ss = sufficient_stat_from_trajectory(maph, trace[1], trace[2])
-    #         push!(ss_i, ss)
-    #     end
+        # ss_i = MAPHSufficientStats[]
+        # for trace in full_trace[last.(time_bin[i])]
+        #     ss = sufficient_stat_from_trajectory(maph, trace[1], trace[2])
+        #     push!(ss_i, ss)
+        # end
         
-    #     if !isempty(ss_i)
-    #         mean_observed_ss = mean(ss_i)
-    #         time_slice = first(data[last(last.(time_bin[i]))])[1]
-    #         obs = first(data[last(last.(time_bin[i]))])
-    #         @show obs
-    #         computed_ss = sufficient_stats(obs, maph)
-    #         # @show computed_ss.N, mean_observed_ss.N
+        # if !isempty(ss_i)
+        #     mean_observed_ss = mean(ss_i)
+        #     time_slice = first(data[last(last.(time_bin[i]))])[1]
+        #     obs = first(data[last(last.(time_bin[i]))])
+        #     @show obs
+        #     computed_ss = sufficient_stats(obs, maph)
+        #     # @show computed_ss.N, mean_observed_ss.N
 
-    #         errs_N = (mean_observed_ss.N - computed_ss.N)#./ computed_ss
-    #         push!(N_errors, norm(mean_observed_ss.N - computed_ss.N)/time_slice)
+        #     errs_N = (mean_observed_ss.N - computed_ss.N)#./ computed_ss
+        #     push!(N_errors, norm(mean_observed_ss.N - computed_ss.N)/time_slice)
 
-    #         # computed_ss.B ≈ initial_dist || return false
+        #     # computed_ss.B ≈ initial_dist || return false
 
-    #         # @show computed_ss.Z, mean_observed_ss.Z
-    #         push!(Z_errors, norm(mean_observed_ss.Z - computed_ss.Z)/time_slice)
+        #     # @show computed_ss.Z, mean_observed_ss.Z
+        #     push!(Z_errors, norm(mean_observed_ss.Z - computed_ss.Z)/time_slice)
 
-    #         @show obs
-    #         sufficient_stats()
-    #     end
+        #     @show obs
+        #     sufficient_stats()
+        # end
 
     return true
 

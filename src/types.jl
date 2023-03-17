@@ -36,7 +36,7 @@ mutable struct MAPHDist
     
     #dimensions
     m::Int #number of transient phases
-    n::Int #number of abosrbing states 
+    n::Int #number of absorbing states 
 
     #used for both parameterizations
     α::Adjoint{Float64, Vector{Float64}} #dimension at m
@@ -120,13 +120,9 @@ QQQQ
 MAPHObsData = Vector{SingleObs}
 
 +(ss1::MAPHSufficientStats, ss2::MAPHSufficientStats) = MAPHSufficientStats(ss1.B+ss2.B, ss1.Z+ss2.Z, ss1.M+ ss2.M, ss1.N+ss2.N)
-/(ss::MAPHSufficientStats,n::Real) = MAPHSufficientStats(ss.B/n,ss.Z/n,ss.N/n, ss.M/n,ss.N/n)
+/(ss::MAPHSufficientStats,n::Real) = MAPHSufficientStats(ss.B/n, ss.Z/n, ss.M/n, ss.N/n)
 /(ss1::MAPHSufficientStats,ss2::MAPHSufficientStats) = MAPHSufficientStats(ss1.B ./ ss2.B, ss1.Z ./  ss2.Z, ss1.M ./  ss2.M,  ss1.N ./  ss2.N)
 -(ss1::MAPHSufficientStats, ss2::MAPHSufficientStats) = MAPHSufficientStats(ss1.B-ss2.B, ss1.Z-ss2.Z, ss1.M - ss2.M, ss1.N - ss2.N)
-
-# sum(ss_list::Vector{MAPHSufficientStats}) = foldl(+, ss_list)
-# mean(ss_list::Vector{MAPHSufficientStats}) = sum(ss_list) / length(ss_list)
-
 
 
 """"
