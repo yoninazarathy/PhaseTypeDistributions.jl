@@ -17,49 +17,49 @@ function time_filter_data(data, num_bins::Int64)
     return [ (mean(time_vec[(j-1):j]), filter((obs)->(time_vec[j-1] ≤ first(obs).y < time_vec[j]), data)) for j in 2:length(time_vec)]
 end
 
-"""
-Test the sufficient stats with full trace data
-"""
-function full_trace_sufficient_stats_test(;N=10^4)
-    Λ₄, λ45, λ54, Λ₅ = 5, 2, 7, 10
-    μ41, μ42, μ43, μ51, μ52, μ53 = 1, 1, 1, 1, 1, 1 
-    T_example = [-Λ₄ λ45; λ54 -Λ₅]
-    T0_example = [μ41 μ42 μ43; μ51 μ52 μ53]
+# """
+# Test the sufficient stats with full trace data
+# """
+# function full_trace_sufficient_stats_test(;N=10^4)
+#     Λ₄, λ45, λ54, Λ₅ = 5, 2, 7, 10
+#     μ41, μ42, μ43, μ51, μ52, μ53 = 1, 1, 1, 1, 1, 1 
+#     T_example = [-Λ₄ λ45; λ54 -Λ₅]
+#     T0_example = [μ41 μ42 μ43; μ51 μ52 μ53]
 
-    maph = MAPHDist([0.5,0.5]',T_example, T0_example)
+#     maph = MAPHDist([0.5,0.5]',T_example, T0_example)
 
-    p,q = model_size(maph)
-    test_stats = MAPHSufficientStats(maph)
+#     p,q = model_size(maph)
+#     test_stats = MAPHSufficientStats(maph)
 
-    for _ in 1:N
-        times, states = rand(maph, full_trace = true) 
-        ss = sufficient_stat_from_trajectory(maph, times, states)
-        test_stats.N += ss.N
-        test_stats.Z += ss.Z
-        test_stats.B += ss.B
-    end
+#     for _ in 1:N
+#         times, states = rand(maph, full_trace = true) 
+#         ss = sufficient_stat_from_trajectory(maph, times, states)
+#         test_stats.N += ss.N
+#         test_stats.Z += ss.Z
+#         test_stats.B += ss.B
+#     end
 
-    test_stats.B = test_stats.B/sum(test_stats.B)
-    test_stats.Z = test_stats.Z/sum(test_stats.Z)
-    test_stats.N = test_stats.N/sum(test_stats.N)
+#     test_stats.B = test_stats.B/sum(test_stats.B)
+#     test_stats.Z = test_stats.Z/sum(test_stats.Z)
+#     test_stats.N = test_stats.N/sum(test_stats.N)
 
-    test_α = test_stats.B
+#     test_α = test_stats.B
 
-    @show test_stats.Z
+#     @show test_stats.Z
 
-    computered_intensity = (test_stats.N.*(1 ./ test_stats.Z))
+#     computered_intensity = (test_stats.N.*(1 ./ test_stats.Z))
 
-    @show computered_intensity
+#     @show computered_intensity
 
-    # @show(stats.N,test_stats.N)
-    return true
-end
+#     # @show(stats.N,test_stats.N)
+#     return true
+# end
 
 
 """
 QQQQ
 """
-function sufficient_stats_test(; sim_runs = 100)
+function sufficient_stats_test(; sim_runs::Int = 10^5)
 
     #Set heuristically the number of times steps to be the sqrt of the number of runs
     timesteps = round(Int,sqrt(sim_runs))
@@ -75,40 +75,45 @@ function sufficient_stats_test(; sim_runs = 100)
     m,n = model_size(maph)
    
     data = []
-    # full_trace =[]
+    sufficient_stats_data = []
 
-    @showprogress "Simulating data" for i in 1:sim_runs
+    @showprogress "Simulating data (and computing sufficient states on data)" for i in 1:sim_runs
         times, states = rand(maph, full_trace = true) 
-        # push!(full_trace, (times,states))
-        push!(data, (observation_from_full_traj(times,states),i))
+        push!(sufficient_stats_data, sufficient_stat_from_trajectory(maph, times, states) )
+        push!(data, (observation_from_full_traj(times, states),i))
     end
-
-    # display(data)
-    # @show length(data)
 
     computed_stats = []
 
-    @showprogress "Checking sufficient stats" for i in 1:length(data)
+    @showprogress "Estimating mean sufficient stats on data" for i in 1:length(data)
         obs = first(data[i])
-        # @show obs.y, obs.a
-
         computed_ss = sufficient_stats(obs, maph)
-
         push!(computed_stats, computed_ss)
     end
 
-    # display(computed_stats)
-    # @show mean(computed_stats)
-
     absorbed_filtered_data_vector = absorb_filter_data(data, maph)
-    full_filtered_data = time_filter_data.(absorbed_filtered_data_vector, 10)
+    full_filtered_data = time_filter_data.(absorbed_filtered_data_vector, 100)
 
-    for (i,absorbed_filtered) in enumerate(full_filtered_data)
+    for (i, absorbed_filtered) in enumerate(full_filtered_data)
         for absorbed_time in absorbed_filtered
-            @show i, absorbed_time[1], last.(absorbed_time[2])
+            # @show i, absorbed_time[1], last.(absorbed_time[2])
             # @show mean(first.(absorbed_time[2]))
+            data_indexes = last.(absorbed_time[2])
+            if length(data_indexes) > 0
+                @show i, absorbed_time[1], data_indexes
+                # @show mean([sufficient_stats_data[data_index] for data_index in data_indexes])
+                # @show mean([computed_stats[data_index] for data_index in data_indexes])
+                # @show data_indexes
+                diff = mean([computed_stats[data_index] for data_index in data_indexes]) - mean([sufficient_stats_data[data_index] for data_index in data_indexes])
+                @show diff
+            end
+            # for data_index in  data_indexes
+            #     @show sufficient_stats_data[data_index]
+            # end
         end
     end
+
+
 
     # Z_errors = Float64[]
     # N_errors = Float64[]

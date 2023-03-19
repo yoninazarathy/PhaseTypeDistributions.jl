@@ -7,24 +7,27 @@ observation_from_full_traj(times::Vector{Float64}, states::Vector{Int64}) = (y =
 QQQQ
 """
 function sufficient_stat_from_trajectory(d::MAPHDist, sojourn_times::Array{Float64}, states::Array{Int})::MAPHSufficientStats
-    p,q = model_size(d)
-    transient_states = (q+1):(q+p)
-
+    m, n = model_size(d)
     ss =  MAPHSufficientStats(d)
 
-    @show ss
+    #states are indexed as "absorbing first" so subtract number of absorbing for correct index (__ - n)
 
+    #Set B
+    ss.B[states[1] - n] = 1  
 
-    for s = 1:p
-        if states[1] == transient_states[s]
-            ss.B[s] +=1
-        end
+    #Set Z - Loop over transient states
+    for i = 1:(length(states) - 1)
+        ss.Z[states[i] - n] += sojourn_times[i]
     end
 
-    for i = 1:(length(states)-1)
-        ss.Z[states[i]-q] += sojourn_times[i]
-        ss.N[states[i]-q, states[i+1]] += 1
+    #Set M - Loop over transitions between transient states e.g. with 4 states, (Trans, Trans, Trans, Abs), we will have 2 transitions
+    #if length(states) = 2 , then (trans, abs) and never loop
+    for i = 1:(length(states) - 2)
+        ss.M[states[i] - n, states[i+1] - n] += 1
     end
+
+    #Set N
+    ss.N[states[end - 1] - n, states[end]] = 1
 
     return ss
 end
