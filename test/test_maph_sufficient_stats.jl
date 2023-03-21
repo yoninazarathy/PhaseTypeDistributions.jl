@@ -59,7 +59,7 @@ end
 """
 QQQQ
 """
-function sufficient_stats_test(; sim_runs::Int = 10^5)
+function sufficient_stats_test(; sim_runs::Int = 10^6)
 
     #Set heuristically the number of times steps to be the sqrt of the number of runs
     timesteps = round(Int,sqrt(sim_runs))
@@ -92,7 +92,7 @@ function sufficient_stats_test(; sim_runs::Int = 10^5)
     end
 
     absorbed_filtered_data_vector = absorb_filter_data(data, maph)
-    full_filtered_data = time_filter_data.(absorbed_filtered_data_vector, 100)
+    full_filtered_data = time_filter_data.(absorbed_filtered_data_vector, 50)
 
     for (i, absorbed_filtered) in enumerate(full_filtered_data)
         for absorbed_time in absorbed_filtered
@@ -105,7 +105,7 @@ function sufficient_stats_test(; sim_runs::Int = 10^5)
                 # @show mean([computed_stats[data_index] for data_index in data_indexes])
                 # @show data_indexes
                 diff = mean([computed_stats[data_index] for data_index in data_indexes]) - mean([sufficient_stats_data[data_index] for data_index in data_indexes])
-                @show diff
+                @show (norm(diff.B),norm(diff.Z),norm(diff.M),norm(diff.N))
             end
             # for data_index in  data_indexes
             #     @show sufficient_stats_data[data_index]
