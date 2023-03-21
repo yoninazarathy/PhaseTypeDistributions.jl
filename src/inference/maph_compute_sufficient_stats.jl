@@ -78,13 +78,6 @@ function sufficient_stats(  observation::SingleObs,
     b(y::Float64, k::Int) = exp(maph.T*y) * maph.T0[:,k]
     c(y::Float64, i::Int, j::Int, k::Int) = very_crude_c_solver(y, i, j, k, maph)
 
-
-    # D = Diagonal(maph.T)
-    # PT = I-inv(Diagonal(maph.T))*maph.T
-    # PT0 = -inv(Diagonal(maph.T))*maph.T0
-    # A = inv(I-PT)*PT0
-    # PA = maph.α*A
-
     EB(y::Float64, i::Int, k::Int) = maph.α[i] * b(y, k)[i] / (maph.α * b(y, k))
     EZ(y::Float64, i::Int, k::Int) = c(y, i, i, k) / (maph.α * b(y,k))
     ENT(y::Float64, i::Int, j::Int, k::Int) = i != j ? maph.T[i,j] .* c(y, i, j, k) / (maph.α * b(y,k)) : 0

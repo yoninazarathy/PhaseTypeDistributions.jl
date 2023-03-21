@@ -1,3 +1,5 @@
+module PhaseTypeDistributions
+
 using LinearAlgebra, QuadGK, StatsBase, Distributions, Statistics, ProgressMeter, Dates
 import Base: rand, +, /, -
 import Distributions: cdf, ccdf, mean, var
@@ -9,3 +11,8 @@ include("inference/maph_fit.jl")
 include("structured_ph.jl")
 include("moments.jl")
 include("inference/maph_compute_sufficient_stats.jl")
+
+export MAPHDist, mean #QQQQ add all other exports
+
+
+end #end module

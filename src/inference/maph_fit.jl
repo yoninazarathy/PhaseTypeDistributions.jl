@@ -35,17 +35,14 @@ end
 """
 QQQQ
 """
+function maximum_likelihood_estimate_second_parameter(ss::Vector{MAPHSufficientStats})
+    #QQQQ continue
+    # α = max.(ss.B, 0)
+    # N_total = sum(ss.N, dims = 1) + sum(ss.M, dims=1)
+    # q = [N_total[i]/ss.Z[i] for i = 1:length(ss.Z)]
 
-# function maxi_maxization_step(ss::MAPHSufficientStats)
-#     """
-#     using maph stats to compute the next iteration of the MLE
-#     """
-#     α_next = max.(ss.B,0)
 
-    
-#     return true
-# end
-
+end
 
 
 
