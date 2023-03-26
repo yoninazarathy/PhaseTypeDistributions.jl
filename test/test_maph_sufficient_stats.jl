@@ -1,21 +1,21 @@
-"""
-Returns an array of data filtered according to absorbing state being the index of the array.
-"""
-absorb_filter_data(data, maph::MAPHDist) = [filter((obs)->first(obs).a == i, data) for i in 1:maph.n]
+# """
+# Returns an array of data filtered according to absorbing state being the index of the array.
+# """
+# absorb_filter_data(data, maph::MAPHDist) = [filter((obs)->first(obs).a == i, data) for i in 1:maph.n]
 
-"""
-Returns an array of data filtered according to the sojourn time being less than the index of the time array. 
-"""
-function time_filter_data(data, num_bins::Int64)
+# """
+# Returns an array of data filtered according to the sojourn time being less than the index of the time array. 
+# """
+# function time_filter_data(data, num_bins::Int64)
 
-    times = ((d)->first(d).y).(data)
-    min_time = quantile(times, 0.05)
-    max_time = quantile(times, 0.95)
-    time_vec = vcat([0], Array(LinRange(min_time, max_time, num_bins)), [Inf])
+#     times = ((d)->first(d).y).(data)
+#     min_time = quantile(times, 0.05)
+#     max_time = quantile(times, 0.95)
+#     time_vec = vcat([0], Array(LinRange(min_time, max_time, num_bins)), [Inf])
 
-    #return an array of tuples where the first entry of each tuple is the mean time and the other has the observations
-    return [ (mean(time_vec[(j-1):j]), filter((obs)->(time_vec[j-1] ≤ first(obs).y < time_vec[j]), data)) for j in 2:length(time_vec)]
-end
+#     #return an array of tuples where the first entry of each tuple is the mean time and the other has the observations
+#     return [ (mean(time_vec[(j-1):j]), filter((obs)->(time_vec[j-1] ≤ first(obs).y < time_vec[j]), data)) for j in 2:length(time_vec)]
+# end
 
 # """
 # Test the sufficient stats with full trace data
