@@ -32,13 +32,18 @@ end
 
 computed_stats = []
 
-@show absorb_filter_data(data,maph)[2]
 
 @showprogress "Estimating mean sufficient stats on data" for i in 1:length(data)
 
     obs = first(data[i])
     computed_ss = sufficient_stats(obs, maph)
     push!(computed_stats, computed_ss)
+
+    
+    mle = maximum_likelihood_estimate_second_parameter(computed_ss, maph)
+
+    @show mle 
+
 end
 
 
