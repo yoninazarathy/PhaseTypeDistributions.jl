@@ -4,6 +4,7 @@ Pkg.activate((@__DIR__) * "/..")
 include("../src/PhaseTypeDistributions.jl")
 
 using .PhaseTypeDistributions
+
 using ProgressMeter
 
 #This is now a scratch pad for development.
@@ -15,6 +16,7 @@ T0_example = [μ41 μ42 μ43; μ51 μ52 μ53]
 initial_dist = [0.5,0.5]
 
 maph = MAPHDist(initial_dist', T_example, T0_example)
+init_maph = deepcopy(maph)
 
 m,n = model_size(maph)
    
@@ -34,18 +36,14 @@ computed_stats = []
 
 
 @showprogress "Estimating mean sufficient stats on data" for i in 1:length(data)
-
     obs = first(data[i])
     computed_ss = sufficient_stats(obs, maph)
     push!(computed_stats, computed_ss)
-
-    
-    mle = maximum_likelihood_estimate_second_parameter(computed_ss, maph)
-
-    @show mle 
-
 end
-
+average_expected_ss = mean(computed_stats)
+@show average_expected_ss
+mle = maximum_likelihood_estimate_second_parameter(average_expected_ss, maph)
+@show mean(mle), mean(init_maph)
 
 
 # using Plots

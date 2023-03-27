@@ -24,6 +24,7 @@ end
 Returns a vector of absorption probabilities for the MAPH dist
 """
 function absorption_probs(d::MAPHDist)
+    #QQQQ maybe improve this by using R (row sum of R)
     d = non_degenerate_maph(d)
     D = Diagonal(d.T)
     return -d.α*inv(d.T)*d.T0

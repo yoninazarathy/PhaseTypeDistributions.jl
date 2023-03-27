@@ -33,34 +33,25 @@ function sufficient_stat_from_trajectory(d::MAPHDist, sojourn_times::Array{Float
 end
 
 """
-QQQQ
+`ss` is the average expected sufficient statistics. 
 """
 function maximum_likelihood_estimate_second_parameter(ss::MAPHSufficientStats, maph::MAPHDist)
-    #QQQQ continue
-    α = max.(ss.B, 0)
-    
-    @show α
-
-    @show ss.M
-    @show ss.N
-
-    m,n = model_size(maph)
+    m, n = model_size(maph)
+    α̂ = max.(ss.B, 0)
     N_total = sum(ss.N, dims = 2) + sum(ss.M, dims=2)
-
-    @show N_total
-    @show "hell0"
-    q = [N_total[i]/ss.Z[i] for i = 1:m]
-    
+    q̂ = [N_total[i]/ss.Z[i] for i = 1:m]
     absorb = absorption_probs(maph)
-
-    R = [absorb[k]ss.B[i]/ss.B[i] for i =1:m, k = 1:n]
-
-    P = [[absorb[k]*ss.M[i,j] for i = 1:m, j = 1:m] for k = 1:n]
-
-    T, T0 =  T_T0_from_R_P_q(q,R,P)
-
-    return MAPHDist(α', T, T0)
-
+    R̂ = [absorb[k]*ss.B[i]/ss.B[i] for i =1:m, k = 1:n]
+    P̂ = [[ss.M[i,j]/N_total[i] for i = 1:m, j = 1:m] for k = 1:n]
+    
+    @show "running34324"
+    @show "hi"
+    maph.α = α̂'
+    maph.T = Diagonal(q̂)
+    maph.R = R̂
+    maph.P = P̂
+    update_params_2to1!(maph)
+    return maph
 end
 
 
