@@ -35,22 +35,50 @@ end
 """
 `ss` is the average expected sufficient statistics. 
 """
-function maximum_likelihood_estimate_second_parameter(ss::MAPHSufficientStats, maph::MAPHDist)
+function maximum_likelihood_estimate_second_parameter(filtered_ss_list::Vector{Any}, maph::MAPHDist)
     m, n = model_size(maph)
-    α̂ = max.(ss.B, 0)
-    N_total = sum(ss.N, dims = 2) + sum(ss.M, dims=2)
-    q̂ = [N_total[i]/ss.Z[i] for i = 1:m]
-    absorb = absorption_probs(maph)
-    R̂ = [absorb[k]*ss.B[i]/ss.B[i] for i =1:m, k = 1:n]
-    P̂ = [[ss.M[i,j]/N_total[i] for i = 1:m, j = 1:m] for k = 1:n]
+
+    total_ss = reduce(vcat, filtered_ss_list)
     
-    @show "running34324"
-    @show "hi"
+    L = length(total_ss)
+
+    B_total = (sum([total_ss[i].B for i = 1:L], dims = 1))[1]
+
+    N_total = (sum([sum(total_ss[i].N,dims = 2)+sum(total_ss[i].M, dims=2) for i = 1:L],dims=1))[1]
+
+    Z_total = (sum([total_ss[i].Z for i = 1:L], dims = 1))[1]
+
+    B_filtered = [(sum([filtered_ss_list[k][i].B for i = 1:length(filtered_ss_list[k])], dims = 1))[1] for k = 1:n]
+
+    M_filtered = [(sum([filtered_ss_list[k][i].M for i = 1:length(filtered_ss_list[k])], dims = 1))[1] for k = 1:n]
+    
+    N_total_filtered = [(sum([sum(filtered_ss_list[k][i].N, dims = 2)+
+    sum(filtered_ss_list[k][i].M, dims = 2) for i = 1:length(filtered_ss_list[k])], dims = 1))[1] for k = 1:n]
+
+    α̂ = B_total/L
+
+    q̂ = [N_total[i]/Z_total[i] for i = 1:m]
+
+    R̂ = [B_filtered[k][i]/B_total[i] for i =1:m, k = 1:n]
+
+    P̂  = [[M_filtered[k][i,j]/N_total_filtered[k][i] for i = 1:m, j = 1:m] for k = 1:n]
+
+
+    @show q̂
+
+    # α̂ = max.(ss.B, 0)
+    # @show ss
+    # N_total = sum(ss.N, dims = 2) + sum(ss.M, dims=2)
+    # q̂ = [N_total[i]/ss.Z[i] for i = 1:m]
+    # R̂ = [absorb[k]*ss.B[i]/ss.B[i] for i =1:m, k = 1:n]
+    # P̂ = [[ss.M[i,j]/N_total[i] for i = 1:m, j = 1:m] for k = 1:n]
+
     maph.α = α̂'
     maph.T = Diagonal(q̂)
     maph.R = R̂
     maph.P = P̂
     update_params_2to1!(maph)
+
     return maph
 end
 

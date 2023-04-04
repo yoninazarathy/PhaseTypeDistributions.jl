@@ -1,3 +1,4 @@
+
 using Revise
 
 module PhaseTypeDistributions
@@ -15,7 +16,7 @@ include("moments.jl")
 include("inference/maph_compute_sufficient_stats.jl")
 
 export  MAPHDist, 
-        mean, 
+        mean,scv,var,
         model_size, 
         sufficient_stat_from_trajectory, 
         observation_from_full_traj, 

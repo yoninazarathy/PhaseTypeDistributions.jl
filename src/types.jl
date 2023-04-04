@@ -90,7 +90,7 @@ end
 QQQQ -doc to do
 """
 function update_params_2to1!(dist::MAPHDist)
-    dist.T, dist.T0 = T_T0_from_R_P_q(-diag(dist.T), dist.R, dist.P)
+    dist.T, dist.T0 = T_T0_from_R_P_q(diag(dist.T), dist.R, dist.P)
 end
 
 """

@@ -9,8 +9,8 @@ using ProgressMeter
 
 #This is now a scratch pad for development.
 
-Λ₄, λ45, λ54, Λ₅ = 5., 2., 2., 5.
-μ41, μ42, μ43, μ51, μ52, μ53 = 1., 1., 1., 1., 1., 1. 
+Λ₄, λ45, λ54, Λ₅ = 10., 5., 2., 5.
+μ41, μ42, μ43, μ51, μ52, μ53 = 3., 1., 1., 1., 1., 1. 
 T_example = [-Λ₄ λ45; λ54 -Λ₅]
 T0_example = [μ41 μ42 μ43; μ51 μ52 μ53]
 initial_dist = [0.5,0.5]
@@ -23,7 +23,7 @@ m,n = model_size(maph)
 data = []
 sufficient_stats_data = []
 
-sim_runs = 1000
+sim_runs = 1000000
 
 
 @showprogress "Simulating data (and computing sufficient states on data)" for i in 1:sim_runs
@@ -32,18 +32,41 @@ sim_runs = 1000
     push!(data, (observation_from_full_traj(times, states),i))
 end
 
-computed_stats = []
+# computed_stats = []
 
+filtered_data = absorb_filter_data(data,maph)
 
-@showprogress "Estimating mean sufficient stats on data" for i in 1:length(data)
-    obs = first(data[i])
-    computed_ss = sufficient_stats(obs, maph)
-    push!(computed_stats, computed_ss)
+total_stats = []
+
+for data in filtered_data
+    computed_stats = []
+    @showprogress "Estimating mean sufficient stats on data"  for i in 1:length(data)
+        obs = first(data[i])
+        computed_ss = sufficient_stats(obs, maph)
+        push!(computed_stats, computed_ss)
+    end
+    push!(total_stats, computed_stats)
 end
-average_expected_ss = mean(computed_stats)
-@show average_expected_ss
-mle = maximum_likelihood_estimate_second_parameter(average_expected_ss, maph)
+
+
+# @show reduce(vcat,total_stats)[1]
+
+
+# @showprogress "Estimating mean sufficient stats on data" for i in 1:length(data)
+#     obs = first(data[i])
+#     computed_ss = sufficient_stats(obs, maph)
+#     push!(computed_stats, computed_ss)
+# end
+
+# @show absorb_filter_data(data,maph)[1]
+
+# average_expected_ss = mean(computed_stats)
+# @show average_expected_ss
+mle = maximum_likelihood_estimate_second_parameter(total_stats, maph)
+
+@show mle
 @show mean(mle), mean(init_maph)
+@show scv(mle), scv(init_maph)
 
 
 # using Plots
