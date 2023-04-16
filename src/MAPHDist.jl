@@ -1,9 +1,7 @@
 """
-
 Create an MAPHDist of dimensions pxq where q is the length of `probs`, `means`, and `scvs` and p is specified.
 
-This tries to do a best "moment fit" for the probability of absorbitions, means, and scvs
-
+This tries to do a best "moment fit" for the probability of absorptions, means, and scvs
 """
 function MAPHDist(  p::Int, 
                     probs::Vector{Float64}, 
@@ -52,20 +50,6 @@ function MAPHDist(  p::Int,
     return MAPHDist(α, T, T0)
 end
 
-
-
-
-function q_matrix(d::MAPHDist)::Matrix{Float64}
-    p, q = model_size(d)
-    return [zeros(q,p) zeros(q,q) ; d.T0 d.T]
-end
-
-function p_matrix(d::MAPHDist)::Matrix{Float64}
-    p, q = model_size(d)
-    PT = I-inv(Diagonal(d.T))*d.T
-    PT0 = -inv(Diagonal(d.T))*d.T0
-    return [I zeros(q,p); PT0 PT]
-end
 
 function rand(d::MAPHDist; full_trace = false)
     p, q = model_size(d)
