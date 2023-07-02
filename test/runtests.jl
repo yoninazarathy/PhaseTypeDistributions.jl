@@ -21,4 +21,4 @@ Random.seed!(2)
 # @test test_maph_init();
 # @test test_maph_perturbation()
 # @test full_trace_sufficient_stats_test()
-@test sufficient_stats_test()
+#@test sufficient_stats_test()

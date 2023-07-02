@@ -23,7 +23,9 @@ export  MAPHDist,
         sufficient_stats, 
         absorb_filter_data, 
         time_filter_data, 
-        maximum_likelihood_estimate_second_parameter #QQQQ add all other exports
+        maximum_likelihood_estimate_second_parameter,
+        randn#QQQQ add all other exports
 
 
 end #end module
+

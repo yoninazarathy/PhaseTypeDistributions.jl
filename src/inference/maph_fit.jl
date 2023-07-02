@@ -85,36 +85,36 @@ end
 
 
 #Maybe rename this function to "maximization step..." or similar
-function maximum_likelihood_estimate(p::Int, q::Int, ss::MAPHSufficientStats)
+# function maximum_likelihood_estimate(p::Int, q::Int, ss::MAPHSufficientStats)
 
-    #QQQQ pickup here next time.... (from eq 16)
+#     #QQQQ pickup here next time.... (from eq 16)
 
-    α_next = max.(ss.B,0)
-    t_next = max.(ss.N[:,1:q] ./ ss.Z,0)
+#     α_next = max.(ss.B,0)
+#     t_next = max.(ss.N[:,1:q] ./ ss.Z,0)
 
-    t_next[isnan.(t_next)] .= 0
+#     t_next[isnan.(t_next)] .= 0
 
-    T_next = zeros(p,p) 
-    T0_next = zeros(p,q)
+#     T_next = zeros(p,p) 
+#     T0_next = zeros(p,q)
 
-    for i = 1:p
-        T_next[i,:] = max.(ss.N[i,(q+1):(q+p)]./ss.Z[i],0)
-        T_next[i,isnan.(T_next[i,:])].=0
-        T_next[i,i] = -(sum(t_next[i,:]) + sum(T_next[i,:])) #-(t_next[i]+sum(T_next[i,:]))
-        T0_next[i,:] = max.(ss.N[i,1:q]./ss.Z[i],0)
-        T0_next[i,isnan.(T0_next[i,:])].=0
-    end
-    #################
+#     for i = 1:p
+#         T_next[i,:] = max.(ss.N[i,(q+1):(q+p)]./ss.Z[i],0)
+#         T_next[i,isnan.(T_next[i,:])].=0
+#         T_next[i,i] = -(sum(t_next[i,:]) + sum(T_next[i,:])) #-(t_next[i]+sum(T_next[i,:]))
+#         T0_next[i,:] = max.(ss.N[i,1:q]./ss.Z[i],0)
+#         T0_next[i,isnan.(T0_next[i,:])].=0
+#     end
+#     #################
 
-    T = ss.N[:,(q+1):(q+p)]./ss.Z
-    T0 = ss.N[:,1:q]./ss.Z
-    for i = 1:p
-        T[i,i] += -sum(T[i,:])-sum(T0[i,:])
-    end
+#     T = ss.N[:,(q+1):(q+p)]./ss.Z
+#     T0 = ss.N[:,1:q]./ss.Z
+#     for i = 1:p
+#         T[i,i] += -sum(T[i,:])-sum(T0[i,:])
+#     end
 
 
-    return α_next, T_next, T0_next
-end
+#     return α_next, T_next, T0_next
+# end
 
 
 """

@@ -55,7 +55,13 @@ function rand(d::MAPHDist; full_trace = false)
     p, q = model_size(d)
     transient_states = (q+1):(q+p)
     all_states = 1:(q+p)
-    Pjump = p_matrix(d)
+    P_λ = I - inv(Diagonal(d.T))*d.T
+    P_μ = d.R - P_λ*d.R
+
+    P1 = hcat(P_μ, P_λ)
+    P2  = hcat(Matrix(Diagonal(ones(q))), zeros(q,p))
+    
+    Pjump = [P2; P1]
     Λ = vcat(zeros(q), -diag(d.T))
 
     if full_trace
