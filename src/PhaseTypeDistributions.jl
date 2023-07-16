@@ -1,6 +1,3 @@
-
-using Revise
-
 module PhaseTypeDistributions
 
 using LinearAlgebra, QuadGK, StatsBase, Distributions, Statistics, ProgressMeter, Dates
@@ -24,6 +21,7 @@ export  MAPHDist,
         absorb_filter_data, 
         time_filter_data, 
         maximum_likelihood_estimate_second_parameter,
+        compute_descriptive_stats
         randn#QQQQ add all other exports
 
 

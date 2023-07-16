@@ -6,17 +6,7 @@ using Revise
 using PhaseTypeDistributions
 using ProgressMeter
 
-#This is now a scratch pad for development.
-
-
-
-
-
-
-
-
-
-
+#This is now a scratch pad for development
 
 ###############
 # Develop MLE #
