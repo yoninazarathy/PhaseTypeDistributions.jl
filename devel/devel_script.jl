@@ -1,12 +1,22 @@
 using Pkg
 Pkg.activate((@__DIR__) * "/..")
-
-include("../src/PhaseTypeDistributions.jl")
+using Revise
+# include("../src/PhaseTypeDistributions.jl")
 #import .PhaseTypeDistributions
-using .PhaseTypeDistributions
+using PhaseTypeDistributions
 using ProgressMeter
 
 #This is now a scratch pad for development.
+
+
+
+
+
+
+
+
+
+
 
 ###############
 # Develop MLE #
@@ -38,7 +48,14 @@ if true
     end 
 
 
-    filtered_data = absorb_filter_data(data,maph)
+    times_data = [data[i][1].y for i in 1:length(data)]
+    states_data = [data[i][1].a for i in 1:length(data)]
+    
+    display(compute_descriptive_stats(times_data, states_data))
+
+    # filtered_data = absorb_filter_data(data,maph)
+
+    # compute_descriptive_stats
 
     # # computed_stats = []
 

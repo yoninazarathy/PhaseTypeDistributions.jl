@@ -64,8 +64,6 @@ function maximum_likelihood_estimate_second_parameter(filtered_ss_list::Vector{A
     P̂  = [[M_filtered[k][i,j]/N_total_filtered[k][i] for i = 1:m, j = 1:m] for k = 1:n]
 
 
-    @show q̂
-
     # α̂ = max.(ss.B, 0)
     # @show ss
     # N_total = sum(ss.N, dims = 2) + sum(ss.M, dims=2)
