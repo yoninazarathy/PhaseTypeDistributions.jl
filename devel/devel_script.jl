@@ -12,6 +12,28 @@ using ProgressMeter
 # Develop MLE #
 ###############
 if true
+
+    probs, means, scvs = [0.458, 0.2722, 0.2698], [0.2706401195766266, 0.27505749846070254, 0.2872995493009737], [1.2, 1.028862135296857, 1.5]
+    total_mean = probs'means
+    total_scv = probs'scvs
+    # @show total_mean, total_scv
+    d = MAPHDist(10, probs, means, scvs; ω = 100.);
+    L = 100
+    obs = [rand(d) for _ in 1:L]
+    # @show mean(first.(obs))
+    # @show scv(first.(obs))
+    # @show [mean(last.(obs).==k) for k in 1:3]
+ 
+    ss = [sufficient_stats(ob, d) for ob in obs]
+    @show mean([ss1.Z for ss1 in ss])
+
+    
+
+end
+
+
+
+if false
     Λ₄, λ45, λ54, Λ₅ = 10., 5., 2., 5.
     μ41, μ42, μ43, μ51, μ52, μ53 = 3., 1., 1., 1., 1., 1. 
     T_example = [-Λ₄ λ45; λ54 -Λ₅]
