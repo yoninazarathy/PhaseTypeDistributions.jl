@@ -1,21 +1,61 @@
 """
-QQQQ
+A mutable struct representing a probability distribution with parameters α and a transition matrix T.
+    α::Adjoint{Float64, Vector{Float64}}`: The parameters α of the distribution.
+    T::Matrix{Float64}`: The transition matrix T of the distribution.
 """
+
 mutable struct PHDist
     α::Adjoint{Float64, Vector{Float64}}
     T::Matrix{Float64}
+    PHDist(α::Adjoint{Float64, Vector{Float64}}, T::Matrix{Float64}) = new(α, T)
 end
 
+function build_ph(α::Adjoint{Float64, Vector{Float64}}, T::Matrix{Float64})
+    if size(T, 1) != size(T, 2)
+        error("T must be a square matrix")
+    end
+    
+    if length(α) != size(T, 1)
+        error("The length of α must be equal to the number of rows in T")
+    end
+
+    return PHDist(α, T)
+end
+
+
+"""
+MAPH distribution
+# Fields
+- `m::Integer`: Number of phases in the MAPH distribution.
+- `n::Integer`: Number of absorbing states ain the MAPH.
+- `α::Adjoint{Float64, Vector{Float64}}`: Initial probability distribution across the phases. Elements should sum to 1.
+- `T::Matrix{Float64}`: `m x m` transition rate matrix for the MAPH states.
+- `T0::Matrix{Float64}`: `m x m` abosrbing rate matrix for the MAPH states.
+-  q::Vector{Float64}: `m` vector of transition rates from the MAPH states to the absorbing states.
+- `R::Matrix{Float64}`: `m x n` absorbing probabilities matrix.
+- `P::Vector{Matrix{Float64}}`: Vector of `n` `m x m` matrices, representing the transition probabilities between the MAPH states given absorbing states.
+"""
+mutable struct MAPHDist
+    α::Adjoint{Float64, Vector{Float64}} 
+    T::Matrix{Float64} 
+    T0::Matrix{Float64}
+    q:: Vector{Float64}
+    #second parameterization
+    R::Matrix{Float64} #dimension at mxn
+    P::Vector{Matrix{Float64}} #a vector of length n, with elements at dimension mxm
+    MAPHDist(α::Adjoint{Float64, Vector{Float64}}, T::Matrix{Float64}, T0::Matrix{Float64}, q::Vector{Float64}, R::Matrix{Float64}, P::Vector{Matrix{Float64}}) = new(α, T, T0, q, R, P)
+end
 
 """
 Takes T, T0 of first parameterization and returns matrices of second parameterization.
 """
 function R_P_from_T_T0(T, T0)
     m, n  = size(T0)
+    q = -diag(T)
     R = -inv(T)*T0
     P = [[i != j ? -T[i,j] * R[j,k] / T[i,i] / R[i,k] : 0 for i in 1:m, j in 1:m] for k in 1:n]
-                    #(T[i,j]/(-T[i,i]))*(R[j,k]/R[i,k])
-    return R, P
+
+    return q, R, P
 end
 
 """
@@ -29,54 +69,28 @@ function T_T0_from_R_P_q(q::Vector{Float64}, R::Matrix{Float64}, P::Vector{Matri
     return T, T0
 end
 
-"""
-QQQQ
-"""
-mutable struct MAPHDist
+function build_maph(α::Adjoint{Float64, Vector{Float64}}, T::Matrix{Float64}, T0::Matrix{Float64})
+    if size(T, 1) != size(T, 2)
+        error("T must be a square matrix")
+    end
+
+    if size(q,1) != size(T,1)
+        error("q must be the same length as the number of rows in T")
+    end
     
-    #dimensions
-    m::Int #number of transient phases
-    n::Int #number of absorbing states 
-
-    #used for both parameterizations
-    α::Adjoint{Float64, Vector{Float64}} #dimension at m
-
-    #First parameterization
-    T::Matrix{Float64} #dimension at mxm. The negative of the diagonal elements 
-                       #of this matrix are "q" of the second parameterization
-    T0::Matrix{Float64} #dimension at mxn
-
-    #second parameterization
-    R::Matrix{Float64} #dimension at mxn
-    P::Vector{Matrix{Float64}} #a vector of length n, with elements at dimension mxm
-
-    """
-    Constructor using the first parameterization.
-    """
-    function MAPHDist(α::Adjoint{Float64, Vector{Float64}}, T::Matrix{Float64}, T0::Matrix{Float64})
-        m = length(α)
-        n = size(T0)[2]
-        size(T) != (m, m) && error("Wrong size for T")
-        size(T0) != (m, n) && error("Wrong size for T0")
-        !isapprox(sum(sum(T, dims=2) + sum(T0, dims=2)),0,atol = 10e-5) && error("Non-generator matrix")
-
-        return new(m, n, α, T, T0, R_P_from_T_T0(T, T0)...)
+    if size(T0, 1) != size(T, 1)
+        error("T0 must be a mxn matrix")
     end
-
-    """
-    Constructor using the second parameterization.
-    """
-    function MAPHDist(α::Adjoint{Float64, Vector{Float64}}, q::Vector{Float64}, R::Matrix{Float64}, P::Vector{Matrix{Float64}})
-        m = length(α)
-        n = size(R)[2]
-        size(R) != (m, n) && error("Wrong size for R")
-        length(q) != m && error("Wrong length for q")
-        length(P) != n && error("Wrong length for P")
-        #QQQQ todo - more checks for stochastic matrix, etc...
-        T, T0 = T_T0_from_R_P_q(q, R, P)
-        return new(m, n, α, T_T0_from_R_P_q(q, R, P)...,R, P)
+    
+    if length(α) != size(T, 1)
+        error("The length of α must be equal to the number of rows in T")
     end
+    
+    return MAPHDist(α, T, T0, R_P_from_T_T0(T, T0)...)
 end
+
+build_maph(α::Adjoint{Float64, Vector{Float64}}, R::Matrix{Float64}, P::Matrix{Float64})= MAPHDist(α, T_T0_from_R_P_q(q, R, P)..., q, R, P)
+
 
 
 """
@@ -92,6 +106,7 @@ QQQQ -doc to do
 function update_params_2to1!(dist::MAPHDist)
     dist.T, dist.T0 = T_T0_from_R_P_q(diag(dist.T), dist.R, dist.P)
 end
+
 
 """
 QQQQ
@@ -129,7 +144,6 @@ MAPHObsData = Vector{SingleObs}
 QQQQ - put doc string
 """
 model_size(ph::PHDist) = length(ph.α)
-
 
 
 """
