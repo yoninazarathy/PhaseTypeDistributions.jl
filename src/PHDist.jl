@@ -43,22 +43,20 @@ function hypo_exp_dist(mean::Float64,scv::Float64)::PHDist
     @assert scv < 1.0 "SCV must be less than 1"
     n = Int(ceil(1/scv))
     ν1 = n/(1+sqrt((n-1)*(n*scv-1)))
-    # ν2 = ν1*(n-1)/(ν1-1)
-    ν2 = -(n-1)/(1-ν1)
-
+    ν2 = ν1*(n-1)/(ν1-1)
     α = zeros(1, n)
     α[1, 1] = 1
     T = zeros(n,n)
     T[1,1] = -ν1
     T[1,2] = ν1
-
     for i = 2:(n-1)
         T[i,i] = -ν2
         T[i,i+1] = ν2
     end
+
     T[n,n] = -ν2
 
-    return ph_constructor(α, (1/mean)*T) 
+    return ph_constructor(α, (1/mean) * T) 
 end
 
 # function mixed_expo_dist(p1::Int64,ω::Float64)
