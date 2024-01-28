@@ -1,6 +1,6 @@
 module PhaseTypeDistributions
 
-using LinearAlgebra, QuadGK, StatsBase, Distributions, Statistics, ProgressMeter, Dates
+using LinearAlgebra, QuadGK, StatsBase, Distributions, Statistics, ProgressMeter, Dates, StaticArrays
 import Base: rand, +, /, -
 import Distributions: cdf, ccdf, mean, var
 
