@@ -39,6 +39,7 @@ function MAPH_constructor(α::Union{M, Vector{Float64}}, T::M, D::M, q::Vector{F
     @assert length(α) == size(T, 1) "The length of α must be equal to the number of rows in T"
     @assert size(D) == size(R) "prob and rate matrix must have the same dimension"
     @assert sum(α) == 1 "initial prob must sum to 1"
+    #adding more model constraints here.. e.g. the diagonal must be dominant
     return MAPHDist(α, T, D, q, R, P)
 end
 
