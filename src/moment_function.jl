@@ -18,6 +18,6 @@ model_size(ph::PHDist) = size(ph.T, 1)
 kth_moment(ph::PHDist, k::Real) = (-1)^k * factorial(k) * ph.α * inv(ph.T)^k * ones(model_size(ph))
 mean(ph::PHDist) = kth_moment(ph, 1)
 var(ph::PHDist) = kth_moment(ph, 2) - mean(ph).^2
-scv(ph::PHDist) = VAR(ph) ./ (mean(ph).^2)
+scv(ph::PHDist) = var(ph) ./ (mean(ph).^2)
 
 ph = PHDist([0.3 0.7],  [-3.0 1.0; 1.0 -3.0])
