@@ -59,7 +59,7 @@ end
 """
 Takes R, P, q of second parameterization and returns matrices of first parameterization.
 """
-function T_D_from_R_P_q(q::Vector{Float64}, R::M, P::Vector{M}) where {M <: Matrix{Float64}}
+function T_D_from_R_P_q(q::Vector{Float64}, R::M, P::M) where {M <: Matrix{Float64}}
     m = length(q)
     k = 1 #QQQQ this is some fixed k (abosrbing state - as conversion will work the same for all k)
     T = [i==j ? -q[i] : q[i] * P[k][i,j] * R[i,k] / R[j,k] for i in 1:m, j in 1:m]
