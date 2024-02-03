@@ -50,10 +50,10 @@ $(TYPEDEF)
 """
 struct SingleObservation
     "absorbing state"
-    a_state::Int
+    a::Int
 
     "absorbing time"
-    a_time::Float64
+    y::Float64
 
     "sojourn_times"
     sojourn_times::Vector{Float64}
@@ -89,11 +89,11 @@ end
 
 
 """
-$(TYPEDFIELDS)
-The mutable struct which representing the statistics to fit the MAPH distribtuion 
 $(TYPEDEF)
+The struct which representing the statistics to fit the MAPH distribtuion 
+$(TYPEDFIELDS)
 """
-mutable struct MAPHSufficientStats
+struct MAPHSufficientStats
     "initial starts"
     B::Vector{Float64} 
 
@@ -106,20 +106,81 @@ mutable struct MAPHSufficientStats
     "transitions between transient to abosrbing states"
     N::Matrix{Float64} 
 
-    MAPHSufficientStats(B::Vector{Float64}, Z::Vector{Float64}, M::Matrix{Float64},  N::Matrix{Float64}) = new(B,Z,M,N)
-    function MAPHSufficientStats(maph::MAPHDist) 
-        m, n = model_size(maph)
-        @assert (m > 0) && (n > 0) " need at least one transient and absorbing phases"
-        new(zeros(m), zeros(m), zeros(m,m), zeros(m,n))
-    end
 end
+
+
 
 +(ss1::MAPHSufficientStats, ss2::MAPHSufficientStats) = MAPHSufficientStats(ss1.B+ss2.B, ss1.Z+ss2.Z, ss1.M+ ss2.M, ss1.N+ss2.N)
 /(ss::MAPHSufficientStats,n::Real) = MAPHSufficientStats(ss.B/n, ss.Z/n, ss.M/n, ss.N/n)
 /(ss1::MAPHSufficientStats,ss2::MAPHSufficientStats) = MAPHSufficientStats(ss1.B ./ ss2.B, ss1.Z ./  ss2.Z, ss1.M ./  ss2.M,  ss1.N ./  ss2.N)
 -(ss1::MAPHSufficientStats, ss2::MAPHSufficientStats) = MAPHSufficientStats(ss1.B-ss2.B, ss1.Z-ss2.Z, ss1.M - ss2.M, ss1.N - ss2.N)
+*(n::Real, ss::MAPHSufficientStats) = MAPHSufficientStats(ss.B *n, ss.Z*n, ss.M*n, ss.N*n)
+
+function very_crude_c_solver(y::Float64, i::Int, j::Int, k::Int, maph::MAPHDist)
+    quadgk(u -> (maph.α * exp(maph.T*u))[i] * (exp(maph.T*(y-u))*maph.D[:,k])[j] , 0, y, rtol=1e-8) |> first
+end
+
+"""
+$(METHODLIST)
+Compute the expected value of the sufficient stats
+"""
+function compute_sufficient_stats(observation::SingleObservation, 
+                            maph::MAPHDist; 
+                            c_solver = very_crude_c_solver)
+
+    m, n = model_size(maph)
+    
+    a(y::Float64) = maph.α * exp(maph.T*y)
+    b(y::Float64, k::Int) = exp(maph.T*y) * maph.D[:,k]
+    c(y::Float64, i::Int, j::Int, k::Int) = very_crude_c_solver(y, i, j, k, maph)
+
+    EB(y::Float64, i::Int, k::Int) = maph.α[i] * b(y, k)[i] / reduce(vcat, (maph.α * b(y, k)))
+    EZ(y::Float64, i::Int, k::Int) = c(y, i, i, k) / reduce(vcat, (maph.α * b(y,k)))
+    ENT(y::Float64, i::Int, j::Int, k::Int) = i != j ? maph.T[i,j] .* c(y, i, j, k) / reduce(vcat, (maph.α * b(y,k))) : 0
+    ENA(y::Float64, i::Int, j::Int, k::Int) = j == k ? a(y)[i] * maph.D[i,k] / reduce(vcat, (maph.α * b(y,k))) : 0 
+
+    B = map(i -> EB(observation.y, i, observation.a - m), 1:m)
+    Z = map(i -> EZ(observation.y, i, observation.a - m), 1:m)
+
+    M = reduce(hcat, map(i ->  map(j -> ENT(observation.y, i, j, observation.a - m), 1:m), 1:m))
+    N = reduce(hcat, map(j -> map(i -> ENA(observation.y, i, j, observation.a -m) , 1:m ), 1:n))
+
+    return MAPHSufficientStats(B, Z, M ,N)
+end
+
+# function weighted_maph_sufficient_stats(stats::MAPHSufficientStats, absorbing_prob::Vector{Float64})
+#     B = stats.B
+#     Z = stats.Z
+#     M = 
+
+
+# end
+
+
+
+function compute_expected_stats(all_obs::Vector{SingleObservation}, maph::MAPHDist; c_solver = very_crude_c_solver, lower_quantile = 0.01, upper_quantile = 0.99)
+    m, n = model_size(maph)
+    all_absorbing_states = map(obs -> obs.a, all_obs)
+    all_absorbing_times = map(obs -> obs.y, all_obs)
+    min_time = quantile(all_absorbing_times, lower_quantile)
+    max_time = quantile(all_absorbing_times, upper_quantile)
+
+    #filter out those ones with abnormal time
+    filtered_obs = filter(obs -> (min_time < obs.y < max_time),  all_obs)
+
+    unique_absorbing_state = sort(unique(all_absorbing_states))
+    #sort the obs data to different absorb states
+    data_sorted_by_states = map(k-> filter(obs -> obs.a == k, filtered_obs), unique_absorbing_state)
+    
+    absorption_counts = countmap(all_absorbing_states)
+    absorbing_prob = map(i -> absorption_counts[i] / length(all_absorbing_states), unique_absorbing_state)
+    expected_stats_by_different_states = map(data_by_absorb_state -> mean(compute_sufficient_stats.(data_by_absorb_state, Ref(maph))), data_sorted_by_states)
+    weighted_stats = map(k -> absorbing_prob[k] * expected_stats_by_different_states[k], eachindex(absorbing_prob))
     
 
+    return sum(weighted_stats)
 
+
+end
 
 
