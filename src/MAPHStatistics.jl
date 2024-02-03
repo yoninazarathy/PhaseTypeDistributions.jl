@@ -172,13 +172,13 @@ function compute_expected_stats(all_obs::Vector{SingleObservation}, maph::MAPHDi
     #sort the obs data to different absorb states
     data_sorted_by_states = map(k-> filter(obs -> obs.a == k, filtered_obs), unique_absorbing_state)
     
+    all_stats = compute_sufficient_stats.(filtered_obs, Ref(maph))
     absorption_counts = countmap(all_absorbing_states)
     absorbing_prob = map(i -> absorption_counts[i] / length(all_absorbing_states), unique_absorbing_state)
     expected_stats_by_different_states = map(data_by_absorb_state -> mean(compute_sufficient_stats.(data_by_absorb_state, Ref(maph))), data_sorted_by_states)
-    weighted_stats = map(k -> absorbing_prob[k] * expected_stats_by_different_states[k], eachindex(absorbing_prob))
+    # weighted_stats = map(k -> absorbing_prob[k] * expected_stats_by_different_states[k], eachindex(absorbing_prob))    
     
-
-    return sum(weighted_stats)
+    return expected_stats_by_different_states
 
 
 end

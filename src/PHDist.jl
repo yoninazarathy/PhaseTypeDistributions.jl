@@ -1,7 +1,9 @@
 """
 $(TYPEDFIELDS)
 The mutable struct which representing the MAPH distribution in different parameterizations
+$(TYPEDEF)
 """
+
 mutable struct PHDist
     "m × 1 Initial probability distribution across the phases. Elements should sum to 1"
     α::Union{Matrix{Float64}, Vector{Float64}}
