@@ -1,6 +1,7 @@
 """
 $(TYPEDFIELDS)
 The mutable struct which representing the MAPH distribution in different parameterizations
+$(TYPEDEF)
 """
 mutable struct MAPHDist
     #first parameterization
@@ -43,11 +44,6 @@ function MAPH_constructor(α::Union{M, Vector{Float64}}, T::M, D::M, q::Vector{F
     return MAPHDist(α, T, D, q, R, P)
 end
 
-function is_degenerate_maph(T::Matrix{Float64})
-    return !all(abs.(diag(T)) .> sqrt(eps()))
-end
-
-
 """
 Takes T, D of first parameterization and returns matrices of second parameterization.
 """
@@ -83,5 +79,4 @@ function MAPH_constructor(α::Union{M, Vector{Float64}}, T::M, D::M)  where {M <
 end
 
 MAPH_constructor(α::Union{M, Vector{Float64}}, q::Vector{Float64}, R::M, P::Vector{M}) where {M <: Matrix{Float64}} = MAPHDist(α, T_D_from_R_P_q(q, R, P)..., q, R, P)
-
 

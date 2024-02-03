@@ -1,7 +1,7 @@
-name = "PhaseTypeDistributions"
+name = "MAPHDistributions"
 uuid = "c6a3dbec-a81b-4ac0-803e-44f90338b00b"
 authors = ["Zhihao Qiao <zhihao.qiao@uq.edu.au>, Yoni Nazarathy <y.nazarathy@uq.edu.au>"]
-version = "0.1.0"
+version = "0.9.0"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
