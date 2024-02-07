@@ -2,24 +2,22 @@ include("MAPH.jl")
 include("MAPHStatistics.jl")
 
 
-function Maximization_step(all_obs::Vector{SingleObservation}, maph::MAPHDist)
+function Maximization_step!(all_obs::Vector{SingleObservation}, maph::MAPHDist)
     m, n = model_size(maph)
 
     stats  = compute_expected_stats(all_obs, maph)
-    mean(stats).B
+
     α =  mean(stats).B
     q = map(i -> sum(sum(stats).N[i, :]) / sum(stats).Z[i] , 1:m)
     ρ = reduce(hcat, map(k -> stats[k].B ./ sum(stats).B, 1:n))
-    P = sum(stats).M ./ sum(sum(stats).N, dims = 2)
+
+    @assert sum(α) ≈ 1.0
+    @assert sum(α .* ρ) ≈ 1.0
+    @assert all(q .> 0)
+
+    P = map(k -> stats[k].M ./ sum(stats[k].N), 1:length(stats) )
+    maph.α = reshape(α, (1,m)) 
     
-    @show α
-    @show q
-    @show ρ
-    @show P
-
-    
-
-
-    
-
+    # maph.α = α
+    update!(maph, q, ρ, P)    
 end

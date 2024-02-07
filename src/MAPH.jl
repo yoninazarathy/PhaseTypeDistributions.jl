@@ -59,7 +59,7 @@ end
 """
 Takes R, P, q of second parameterization and returns matrices of first parameterization.
 """
-function T_D_from_R_P_q(q::Vector{Float64}, R::M, P::M) where {M <: Matrix{Float64}}
+function T_D_from_R_P_q(q::Vector{Float64}, R::M, P::Vector{M}) where {M <: Matrix{Float64}}
     m = length(q)
     k = 1 #QQQQ this is some fixed k (abosrbing state - as conversion will work the same for all k)
     T = [i==j ? -q[i] : q[i] * P[k][i,j] * R[i,k] / R[j,k] for i in 1:m, j in 1:m]
@@ -79,4 +79,24 @@ function MAPH_constructor(α::Union{M, Vector{Float64}}, T::M, D::M)  where {M <
 end
 
 MAPH_constructor(α::Union{M, Vector{Float64}}, q::Vector{Float64}, R::M, P::Vector{M}) where {M <: Matrix{Float64}} = MAPHDist(α, T_D_from_R_P_q(q, R, P)..., q, R, P)
+
+function update!(maph::MAPHDist, q::Vector{Float64}, R::M, P::Vector{M}) where {M <: Matrix{Float64}}
+    T, D = T_D_from_R_P_q(q, R, P)
+    maph.T = T
+    maph.D = D
+    maph.q = q
+    maph.R = R
+    maph.P = P
+end
+
+
+
+function update!(maph::MAPHDist, T::Matrix{Float64}, D::Matrix{Float64})
+    q, R, P = R_P_from_T_D(T, D)
+    maph.T = T
+    maph.D = D
+    maph.q = q
+    maph.R = R
+    maph.P = P
+end
 

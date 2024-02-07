@@ -72,7 +72,6 @@ function rand(maph::MAPHDist; full_trace = true)
     
     state = sample(ctmc.transient_states, weights(maph.α))
     t = 0.0
-    @info "now generating random paths"
     while state ∈ ctmc.transient_states
         sojourn_time = rand(Exponential(1/ctmc.Λ[state]))
         if full_trace
@@ -148,18 +147,9 @@ function compute_sufficient_stats(observation::SingleObservation,
     return MAPHSufficientStats(B, Z, M ,N)
 end
 
-# function weighted_maph_sufficient_stats(stats::MAPHSufficientStats, absorbing_prob::Vector{Float64})
-#     B = stats.B
-#     Z = stats.Z
-#     M = 
-
-
-# end
-
 
 
 function compute_expected_stats(all_obs::Vector{SingleObservation}, maph::MAPHDist; c_solver = very_crude_c_solver, lower_quantile = 0.01, upper_quantile = 0.99)
-    m, n = model_size(maph)
     all_absorbing_states = map(obs -> obs.a, all_obs)
     all_absorbing_times = map(obs -> obs.y, all_obs)
     min_time = quantile(all_absorbing_times, lower_quantile)
@@ -171,10 +161,7 @@ function compute_expected_stats(all_obs::Vector{SingleObservation}, maph::MAPHDi
     unique_absorbing_state = sort(unique(all_absorbing_states))
     #sort the obs data to different absorb states
     data_sorted_by_states = map(k-> filter(obs -> obs.a == k, filtered_obs), unique_absorbing_state)
-    
-    all_stats = compute_sufficient_stats.(filtered_obs, Ref(maph))
-    absorption_counts = countmap(all_absorbing_states)
-    absorbing_prob = map(i -> absorption_counts[i] / length(all_absorbing_states), unique_absorbing_state)
+
     expected_stats_by_different_states = map(data_by_absorb_state -> mean(compute_sufficient_stats.(data_by_absorb_state, Ref(maph))), data_sorted_by_states)
     # weighted_stats = map(k -> absorbing_prob[k] * expected_stats_by_different_states[k], eachindex(absorbing_prob))    
     

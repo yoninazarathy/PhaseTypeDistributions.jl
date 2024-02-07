@@ -5,7 +5,7 @@ import Base: rand, +, /, -, *
 import Distributions: cdf, ccdf, mean, var
 
 include("MAPH.jl")
-export MAPHDist, MAPH_constructor
+export MAPHDist, MAPH_constructor, update!
 include("PHDist.jl")
 # include("inference/maph_fit.jl")
 include("moment_function.jl")
@@ -14,7 +14,7 @@ include("MAPHStatistics.jl")
 export MAPHSufficientStats, +, -, /, *, ContinuousTimeMarkovChain, MAPH_TO_CTMC, SingleObservation, rand,  compute_sufficient_stats, compute_expected_stats
 
 include("MAPHfit.jl")
-export Maximization_step
+export Maximization_step!
 
 # include("types.jl")
 # include("util.jl")

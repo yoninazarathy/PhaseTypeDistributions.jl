@@ -20,6 +20,16 @@ D = [μ41 μ42 μ43; μ51 μ52 μ53]
 maph = MAPH_constructor(α, T, D )
 
 
+all_obs = map(n -> rand(maph), 1:100)
+
+
+
+for k = 1:1000
+    Maximization_step!(all_obs, maph)
+end
+
+maph
+
 
 # include("test_maph_fit.jl")
 # include("test_maph_init.jl")
