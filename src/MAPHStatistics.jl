@@ -148,8 +148,7 @@ function compute_sufficient_stats(observation::SingleObservation,
 end
 
 
-
-function compute_expected_stats(all_obs::Vector{SingleObservation}, maph::MAPHDist; c_solver = very_crude_c_solver, lower_quantile = 0.01, upper_quantile = 0.99)
+function stats_filter(all_obs::Vector{SingleObservation}, lower_quantile = 0.01, upper_quantile = 0.99)
     all_absorbing_states = map(obs -> obs.a, all_obs)
     all_absorbing_times = map(obs -> obs.y, all_obs)
     min_time = quantile(all_absorbing_times, lower_quantile)
@@ -158,16 +157,32 @@ function compute_expected_stats(all_obs::Vector{SingleObservation}, maph::MAPHDi
     #filter out those ones with abnormal time
     filtered_obs = filter(obs -> (min_time < obs.y < max_time),  all_obs)
 
+    filtered_data_length = length(reduce(vcat, filtered_obs))
+
     unique_absorbing_state = sort(unique(all_absorbing_states))
     #sort the obs data to different absorb states
     data_sorted_by_states = map(k-> filter(obs -> obs.a == k, filtered_obs), unique_absorbing_state)
 
-    expected_stats_by_different_states = map(data_by_absorb_state -> mean(compute_sufficient_stats.(data_by_absorb_state, Ref(maph))), data_sorted_by_states)
-    # weighted_stats = map(k -> absorbing_prob[k] * expected_stats_by_different_states[k], eachindex(absorbing_prob))    
+    return filtered_data_length, data_sorted_by_states
+
+end
+
+
+function get_emperical_absorb_prob(all_obs::Vector{SingleObservation})
+    data_length, stats = stats_filter(all_obs)
     
+    return map(stat -> length(reduce(vcat, stat))/ data_length, stats)
+end
+
+
+
+
+
+function compute_expected_stats(all_obs::Vector{SingleObservation}, maph::MAPHDist)
+    _, data_sorted_by_states = stats_filter(all_obs)
+    expected_stats_by_different_states = map(data_by_absorb_state -> mean(compute_sufficient_stats.(data_by_absorb_state, Ref(maph))), data_sorted_by_states)
+
     return expected_stats_by_different_states
-
-
 end
 
 

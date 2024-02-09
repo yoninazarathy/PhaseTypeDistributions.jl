@@ -11,7 +11,7 @@ include("PHDist.jl")
 include("moment_function.jl")
 export absorption_probs, kth_moment, mean, var, scv, sub_distribution, sub_pdf, mgf, model_size
 include("MAPHStatistics.jl")
-export MAPHSufficientStats, +, -, /, *, ContinuousTimeMarkovChain, MAPH_TO_CTMC, SingleObservation, rand,  compute_sufficient_stats, compute_expected_stats
+export MAPHSufficientStats, +, -, /, *, ContinuousTimeMarkovChain, MAPH_TO_CTMC, SingleObservation, rand,  compute_sufficient_stats, compute_expected_stats, stats_filter, get_emperical_absorb_prob
 
 include("MAPHfit.jl")
 export Maximization_step!

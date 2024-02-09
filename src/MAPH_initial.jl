@@ -1,3 +1,7 @@
+include("MAPH.jl")
+include("MAPHStatistics.jl")
+
+
 """
 Create an MAPHDist of dimensions pxq where q is the length of `probs`, `means`, and `scvs` and p is specified.
 
