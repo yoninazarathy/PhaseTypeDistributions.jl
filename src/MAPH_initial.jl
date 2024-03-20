@@ -20,7 +20,7 @@ function maph_initialization(all_obs::Vector{SingleObservation}, m::Int, ω::Rea
 
 
     if m_required ≤ m -1
-        @info "we have enough phases to start the maph_initialization"
+        @info "we have enough phases to start the maph_initialization, states used are absorbing state $(Int.(collect(keys(prob_per_state))))"
         num_phases = m
     elseif m-1 < phases_required_per_state[collect(keys(prob_per_state))[1]]
         @info "will initialize with an exponential distribution"
