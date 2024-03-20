@@ -170,10 +170,32 @@ end
 
 function get_emperical_absorb_prob(all_obs::Vector{SingleObservation})
     data_length, stats = stats_filter(all_obs)
-    
-    return map(stat -> length(reduce(vcat, stat))/ data_length, stats)
+    absorb_probs= map(stat -> length(reduce(vcat, stat))/ data_length, stats)
+    prob_per_state = Dict()
+    for k ∈ eachindex(stats)
+        prob_per_state[stats[k][1].a] = absorb_probs[k]
+    end
+
+    return prob_per_state
 end
 
+
+function get_emperical_statistics(all_obs::Vector{SingleObservation},  ω::Real)
+    _, stats = stats_filter(all_obs)
+    mean_per_state  = Dict()
+    scv_per_state = Dict()
+    for k ∈ eachindex(stats)
+        absorbing_time = map(stat -> stat.y, stats[k])
+        emperical_mean= mean(absorbing_time)
+        emperical_scv = var(absorbing_time) / mean(absorbing_time)^2
+
+        mean_per_state[stats[k][1].a] = emperical_mean - 1 / ω
+        scv_per_state[stats[k][1].a] = (emperical_scv * (ω * emperical_mean)^2 -1) / (ω * emperical_mean)^2
+    end
+
+    return mean_per_state, scv_per_state
+
+end
 
 
 
