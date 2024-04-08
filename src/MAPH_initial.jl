@@ -70,12 +70,17 @@ function maph_initialization(all_obs::Vector{SingleObservation}, m::Int, ω::Rea
 
     T = T_expo
     D = D_expo
-    for key ∈ collect(keys(ph_distributions))
-        T = cat(T, ph_distributions[key].T, dims = (1,2))
-        @show sum(ph_distributions[key].T, dims = 2)
+    for key ∈ reverse(collect(keys(mean_per_state)))
+        if key ∈ keys(ph_distributions)
+           T = cat(T, ph_distributions[key].T, dims = (1,2))
+           D =  sum(ph_distributions[4].T, dims = 1)'
+           @show D
+        end
     end
-    D
-    T
+
+    @show  sum(ph_distributions[4].T, dims = 1)
+    @show D
+    # @show reverse(collect(keys(mean_per_state)))
 
 
     # @show cat(T_expo, collect(values(ph_distributions))[1].T, dims = (1,2))
