@@ -31,7 +31,8 @@ function maph_initialization(all_obs::Vector{SingleObservation}, m::Int, ω::Rea
         num_phases = 0
         maph = (α = ones(1, m) ./ m ; T = diagm(-ω .* ones(m)) ; D = ω .* ones(m, length(prob_per_state)) ./ (length(prob_per_state)) ; MAPH_constructor(α, T, D))
         return maph
-    elseif (phases_required_per_state[collect(keys(prob_per_state))[1]] ≤ m-1) &&  (m-1 < m_required)
+    else 
+        @assert (phases_required_per_state[collect(keys(prob_per_state))[1]] ≤ m-1) &&  (m-1 < m_required)
         k = 1
         phases = 0
         while phases ≤ m-1
@@ -46,9 +47,8 @@ function maph_initialization(all_obs::Vector{SingleObservation}, m::Int, ω::Rea
         num_phases = sum(map(i -> phases_required_per_state[collect(keys(prob_per_state))[i]], 1:(k-1)))
         num_phase_type_distributions = k-1
     end
-    @info "we now start to initialze with one exponential distribution with parameter ω and PH distributions initialized by the absorbing states $(Int.(collect(keys(prob_per_state))[1:num_phase_type_distributions]))"
+    @info "we now start to initialize with one exponential distribution with parameter ω and PH distributions initialized by the absorbing states $(Int.(collect(keys(prob_per_state))[1:num_phase_type_distributions]))"
     
-
     ph_distributions = Dict()
     for key ∈ collect(keys(prob_per_state))[1:num_phase_type_distributions]
         if scv_per_state[key] > 1.0
@@ -59,7 +59,9 @@ function maph_initialization(all_obs::Vector{SingleObservation}, m::Int, ω::Rea
             ph_distributions[key] = hypo_exp_dist(mean_per_state[key], scv_per_state[key])
         end
     end
+    
     expo_phases = m - Int(num_phases)
+    @assert expo_phases ≥ 1
 
     α = hcat(ones(1, expo_phases) ./ (expo_phases), zeros(1, Int(num_phases)))
 
@@ -68,12 +70,14 @@ function maph_initialization(all_obs::Vector{SingleObservation}, m::Int, ω::Rea
     @show T_expo
     @show D_expo
 
-    T = T_expo
-    D = D_expo
+    T = T_expo 
+    D = D_expo 
     for key ∈ reverse(collect(keys(mean_per_state)))
         if key ∈ keys(ph_distributions)
            T = cat(T, ph_distributions[key].T, dims = (1,2))
-           D =  sum(ph_distributions[4].T, dims = 1)'
+           D_temp = zeros(phases_required_per_state[key], length(prob_per_state))
+           D_temp[:,key - length(prob_per_state)+1] = -ph_distributions[key].T*ones(phases_required_per_state[key]) #QQQQ improve with function of PH
+           D = vcat(D, D_temp)
            @show D
         end
     end
