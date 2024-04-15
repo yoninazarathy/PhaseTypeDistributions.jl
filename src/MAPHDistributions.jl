@@ -7,6 +7,7 @@ import Distributions: cdf, ccdf, mean, var
 include("MAPH.jl")
 export MAPHDist, MAPH_constructor, update!
 include("PHDist.jl")
+export get_absorbing_vector
 # include("inference/maph_fit.jl")
 include("moment_function.jl")
 export absorption_probs, kth_moment, mean, var, scv, sub_distribution, sub_pdf, mgf, model_size

@@ -31,7 +31,7 @@ pdfs = sub_distribution.(Ref(maph2), collect(1:3), Ref(ys))
 all_obs = map(n -> rand(maph), 1:100)
 
 
-maph = maph_initialization(all_obs, 6)
+maph = maph_initialization(all_obs, 12)
 
 # @show get_emperical_absorb_prob(all_obs)
 

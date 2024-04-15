@@ -5,11 +5,13 @@ $(TYPEDEF)
 """
 
 mutable struct PHDist
+
     "m × 1 Initial probability distribution across the phases. Elements should sum to 1"
     α::Union{Matrix{Float64}, Vector{Float64}}
 
     "m x m transition rate matrix for the MAPH states"    
     T::Matrix{Float64}
+    
     PHDist(α::Union{Matrix{Float64}, Vector{Float64}}, T::Matrix{Float64}) = new(α, T)
 end
 
@@ -61,6 +63,9 @@ function hypo_exp_dist(mean::Float64,scv::Float64)::PHDist
     return ph_constructor(α, (1/mean) * T) 
 end
 
+function get_absorbing_vector(ph::PHDist)
+    return -1.0 * ph.T * ones(size(ph.T, 1))
+end
 # function mixed_expo_dist(p1::Int64,ω::Float64)
 #     α = ones(1, p1) / p 
 #     α = (ones(p1)/p)'

@@ -9,6 +9,9 @@ function maph_initialization(all_obs::Vector{SingleObservation}, m::Int, ω::Rea
     mean_per_state, scv_per_state= get_emperical_statistics(all_obs, ω)
     prob_per_state = sort(prob_per_state; byvalue = true, rev = true)
 
+    #get number of absorbing state 
+    n = length(prob_per_state)
+
     phases_required_per_state = Dict()
 
     for key ∈ keys(prob_per_state)
@@ -24,7 +27,7 @@ function maph_initialization(all_obs::Vector{SingleObservation}, m::Int, ω::Rea
 
     if m_required ≤ m - 1
         @info "we have enough phases to start the maph_initialization, states used are absorbing state $(Int.(collect(keys(prob_per_state))))"
-        num_phases = m
+        num_phases = m_required
         num_phase_type_distributions = length(keys(prob_per_state))
     elseif m-1 < phases_required_per_state[collect(keys(prob_per_state))[1]]
         @info "will initialize with an exponential distribution"
@@ -61,34 +64,31 @@ function maph_initialization(all_obs::Vector{SingleObservation}, m::Int, ω::Rea
     end
     
     expo_phases = m - Int(num_phases)
+    @show expo_phases
+    @show num_phases
     @assert expo_phases ≥ 1
+ 
 
     α = hcat(ones(1, expo_phases) ./ (expo_phases), zeros(1, Int(num_phases)))
 
-    T_expo = diagm(-ω .* ones(expo_phases))
+    # T_expo = diagm(-ω .* ones(expo_phases))
     D_expo = ω .* ones(expo_phases, length(prob_per_state)) ./ (length(prob_per_state))
-    @show T_expo
-    @show D_expo
 
-    T = T_expo 
+
+    T_expo = ones(expo_phases, Int(num_phases)) .* ω/num_phases
+    T_expo[diagind(T_expo)] .= -ω
+    # T[2:end, :] = D_expo
+    T = T_expo
     D = D_expo 
     for key ∈ reverse(collect(keys(mean_per_state)))
         if key ∈ keys(ph_distributions)
            T = cat(T, ph_distributions[key].T, dims = (1,2))
-           D_temp = zeros(phases_required_per_state[key], length(prob_per_state))
-           D_temp[:,key - length(prob_per_state)+1] = -ph_distributions[key].T*ones(phases_required_per_state[key]) #QQQQ improve with function of PH
+           D_temp = zeros(Int(phases_required_per_state[key]), length(prob_per_state))
+           D_temp[:, Int(key - n  +1)] = get_absorbing_vector(ph_distributions[key])
            D = vcat(D, D_temp)
-           @show D
         end
     end
-
-    @show  sum(ph_distributions[4].T, dims = 1)
-    @show D
-    # @show reverse(collect(keys(mean_per_state)))
-
-
-    # @show cat(T_expo, collect(values(ph_distributions))[1].T, dims = (1,2))
-        
-
+    display(hcat(T, D)) 
+    # return MAPH_constructor(α, T, D)
 
 end
