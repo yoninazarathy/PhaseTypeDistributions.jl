@@ -64,20 +64,12 @@ function maph_initialization(all_obs::Vector{SingleObservation}, m::Int, ω::Rea
     end
     
     expo_phases = m - Int(num_phases)
-    @show expo_phases
-    @show num_phases
     @assert expo_phases ≥ 1
  
-
     α = hcat(ones(1, expo_phases) ./ (expo_phases), zeros(1, Int(num_phases)))
-
-    # T_expo = diagm(-ω .* ones(expo_phases))
-    D_expo = ω .* ones(expo_phases, length(prob_per_state)) ./ (length(prob_per_state))
-
-
-    T_expo = ones(expo_phases, Int(num_phases)) .* ω/num_phases
+    D_expo = zeros(expo_phases, length(prob_per_state))
+    T_expo = zeros(expo_phases, expo_phases)
     T_expo[diagind(T_expo)] .= -ω
-    # T[2:end, :] = D_expo
     T = T_expo
     D = D_expo 
     for key ∈ reverse(collect(keys(mean_per_state)))
@@ -88,7 +80,17 @@ function maph_initialization(all_obs::Vector{SingleObservation}, m::Int, ω::Rea
            D = vcat(D, D_temp)
         end
     end
-    display(hcat(T, D)) 
-    # return MAPH_constructor(α, T, D)
 
+    #Setup transitions from initial exponential into the PH distributions 
+    T_expo2ph = zeros(expo_phases, m-expo_phases)
+    i = 1
+    for key ∈ reverse(collect(keys(mean_per_state)))
+        if key ∈ keys(ph_distributions)
+            T_expo2ph[:,i:(i+length(ph_distributions[key].α)-1)] .= ones(expo_phases) * ph_distributions[key].α * ω/n
+            i += length(ph_distributions[key].α)
+        end
+    end
+
+    T[1:expo_phases, (expo_phases+1):end] .= T_expo2ph
+    return MAPH_constructor(α, T, D)
 end
