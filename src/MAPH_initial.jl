@@ -67,6 +67,7 @@ function maph_initialization(all_obs::Vector{SingleObservation}, m::Int, ω::Rea
     @assert expo_phases ≥ 1
  
     α = hcat(ones(1, expo_phases) ./ (expo_phases), zeros(1, Int(num_phases)))
+    # α = ones(1, expo_phases + Int(num_phases))/(expo_phases + Int(num_phases))
     D_expo = zeros(expo_phases, length(prob_per_state))
     T_expo = zeros(expo_phases, expo_phases)
     T_expo[diagind(T_expo)] .= -ω

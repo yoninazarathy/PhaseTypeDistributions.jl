@@ -53,6 +53,7 @@ function R_P_from_T_D(T::M, D::M) where {M <: Matrix{Float64}}
     R = -inv(T)*D
     # P = map(k-> [i != j ? -T[i,j] * R[j,k] / T[i,i] / R[i,k] : 0 for i in 1:m, j in 1:m], 1:n)
     P = [[i != j ? -T[i,j] * R[j,k] / T[i,i] / R[i,k] : 0.0 for i in 1:m, j in 1:m] for k in 1:n]
+    replace!.(P, NaN => 0)
     return q, R, P
 end
 

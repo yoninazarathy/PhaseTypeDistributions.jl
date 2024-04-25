@@ -29,11 +29,8 @@ ys = collect(0:0.001:2)
 pdfs = sub_distribution.(Ref(maph2), collect(1:3), Ref(ys))
 
 all_obs = map(n -> rand(maph), 1:100)
-
-
-maph2 = maph_initialization(all_obs, 8)
-
-Maximization_step!(all_obs, maph)
+maph_fit = maph_initialization(all_obs, 8)
+Maximization_step!(all_obs, maph_fit)
 
 # @show get_emperical_absorb_prob(all_obs)
 
