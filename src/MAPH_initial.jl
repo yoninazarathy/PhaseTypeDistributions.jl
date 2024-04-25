@@ -92,5 +92,8 @@ function maph_initialization(all_obs::Vector{SingleObservation}, m::Int, ω::Rea
     end
 
     T[1:expo_phases, (expo_phases+1):end] .= T_expo2ph
+
+    @info "now we finish initialization!"
+
     return MAPH_constructor(α, T, D)
 end
