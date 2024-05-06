@@ -2,7 +2,7 @@ include("MAPH.jl")
 include("moment_function.jl")
 
 """
-$(TYPEDFIELDS)
+$(TYPEDEF)
 The struct representing the CTMC with an underlying maph distribution
 $(TYPEDEF)
 """
@@ -44,7 +44,6 @@ end
 
 
 """
-$(TYPEDFIELDS)
 The struct which record time and absorbing state of a CTMC process 
 $(TYPEDEF)
 """
@@ -120,7 +119,6 @@ function very_crude_c_solver(y::Float64, i::Int, j::Int, k::Int, maph::MAPHDist)
 end
 
 """
-$(METHODLIST)
 Compute the expected value of the sufficient stats
 """
 function compute_sufficient_stats(observation::SingleObservation, 
@@ -143,7 +141,7 @@ function compute_sufficient_stats(observation::SingleObservation,
 
     M = reduce(hcat, map(i ->  map(j -> ENT(observation.y, i, j, observation.a - n + 1), 1:m), 1:m))
     N = reduce(hcat, map(j -> map(i -> ENA(observation.y, i, j, observation.a -n + 1) , 1:m ), 1:n))
-
+    
     return MAPHSufficientStats(B, Z, M ,N)
 end
 
