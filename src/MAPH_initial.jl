@@ -2,7 +2,7 @@ include("MAPH.jl")
 include("MAPHStatistics.jl")
 
 
-function maph_initialization(all_obs::Vector{SingleObservation}, m::Int, ω::Real = 100.0)
+function maph_initialization(all_obs::Vector{SingleObservation}, m::Int; ω::Real = 100.0, θ = 30.0)
     @assert m ≥ 1 "cannot have empty phase"
 
     prob_per_state = get_emperical_absorb_prob(all_obs)
@@ -66,8 +66,9 @@ function maph_initialization(all_obs::Vector{SingleObservation}, m::Int, ω::Rea
     expo_phases = m - Int(num_phases)
     @assert expo_phases ≥ 1
  
-    α = hcat(ones(1, expo_phases) ./ (expo_phases), zeros(1, Int(num_phases)))
+    # α = hcat(ones(1, expo_phases) ./ (expo_phases), zeros(1, Int(num_phases)))
     # α = ones(1, expo_phases + Int(num_phases))/(expo_phases + Int(num_phases))
+    α = ones(1, m)./m
     D_expo = zeros(expo_phases, length(prob_per_state))
     T_expo = zeros(expo_phases, expo_phases)
     T_expo[diagind(T_expo)] .= -ω
@@ -93,6 +94,9 @@ function maph_initialization(all_obs::Vector{SingleObservation}, m::Int, ω::Rea
     end
 
     T[1:expo_phases, (expo_phases+1):end] .= T_expo2ph
+    T[2:end, 1] .= θ
+    T[2:end, 2:end] = T[2:end, 2:end] - θ.*I
+    
 
     @info "now we finish initialization!"
 
