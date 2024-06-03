@@ -9,14 +9,15 @@ function fit!(all_obs::Vector{SingleObservation}, maph::MAPHDist)
     @info "start fitting E-step, computing sufficient stats"
     stats  = compute_expected_stats(all_obs, maph)
 
-    #find the error! .. the first states in initilization is unconnected to the other states.. we need to fix
+    #QQQQ fix mean issue for absorbing probs...
 
     #M -step
+    s_stats = sum(stats)
     @info "M-step, start estimating the paramters"
     α =  mean(stats).B
-    q = map(i -> (sum(sum(stats).N[i, :]) + sum(sum(stats).M[i, :]) ) / sum(stats).Z[i] , 1:m)
+    q = map(i -> (sum(s_stats.N[i, :]) + sum(s_stats.M[i, :]) ) / s_stats.Z[i] , 1:m)
 
-    ρ = replace(reduce(hcat, map(k -> stats[k].B ./ sum(stats).B, 1:n)), NaN => 0)
+    ρ = replace(reduce(hcat, map(k -> stats[k].B ./ s_stats.B, 1:n)), NaN => 0)
     @assert sum(α) ≈ 1.0
     @assert sum(α .* ρ) ≈ 1.0
     @assert all(q .> 0)

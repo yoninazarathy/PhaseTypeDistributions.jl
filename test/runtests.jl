@@ -33,7 +33,7 @@ maph_fit = maph_initialization(all_obs, 8; ω = 30.0,  θ = 5.0)
 
 for i ∈ 1:40
     fit!(all_obs, maph_fit)
-    @info "iterating at step $(i), we have mean $(mean(maph_fit)), scv $(scv(maph_fit))"
+    @info "iterating at step $(i), we have mean $(mean(maph_fit)), scv $(scv(maph_fit)), probs $(absorption_probs(maph_fit))"
 end
 # @show get_emperical_absorb_prob(all_obs)
 
