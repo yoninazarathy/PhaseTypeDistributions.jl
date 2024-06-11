@@ -1,28 +1,27 @@
 """
-$(TYPEDFIELDS)
-The mutable struct which representing the MAPH distribution in different parameterizations
 $(TYPEDEF)
+
+Mutable struct defines a phasetype distribution
 """
 
 mutable struct PHDist
 
     "m × 1 Initial probability distribution across the phases. Elements should sum to 1"
-    α::Union{Matrix{Float64}, Vector{Float64}}
+    α::Matrix{<:Real}
 
     "m x m transition rate matrix for the MAPH states"    
-    T::Matrix{Float64}
+    T::Matrix{<:Real}
     
-    PHDist(α::Union{Matrix{Float64}, Vector{Float64}}, T::Matrix{Float64}) = new(α, T)
 end
 
-function ph_constructor(α::Union{Matrix{Float64}, Vector{Float64}}, T::Matrix{Float64})
+function ph_constructor(α::Matrix{<:Real}, T::Matrix{<:Real})
     @assert size(T,1) == size(T, 2) "T must be a square matrix"
     @assert size(α, 2) == size(T, 1) "The length of α must be equal to the number of rows in T"
     return PHDist(α, T)
 end
 
 
-function hyper_exp_dist(mean_desired::Float64, scv_desired::Float64)::PHDist
+function hyper_exp_dist(mean_desired::Real, scv_desired::Real)
     @assert scv_desired > 1.0 "SCV must be greater than 1"
     μ1 = 1/(scv_desired+1) #mean parameter 
     p = (scv_desired-1)/(scv_desired+1+2/(μ1^2)-4/μ1)
@@ -36,14 +35,14 @@ function hyper_exp_dist(mean_desired::Float64, scv_desired::Float64)::PHDist
     return ph_constructor(α, (1/mean_desired)*T)
 end
 
-function exp_dist(mean_desired::Float64)::PHDist
+function exp_dist(mean_desired::Real)
     T = zeros(1,1)
     α = ones(1)
     T[1,1] = -1/mean_desired
     return ph_constructor(α,T)
 end
 
-function hypo_exp_dist(mean::Float64,scv::Float64)::PHDist
+function hypo_exp_dist(mean::Real,scv::Real)
     @assert scv < 1.0 "SCV must be less than 1"
     n = Int(ceil(1/scv))
     ν1 = n/(1+sqrt((n-1)*(n*scv-1)))
@@ -66,7 +65,7 @@ end
 function get_absorbing_vector(ph::PHDist)
     return -1.0 * ph.T * ones(size(ph.T, 1))
 end
-# function mixed_expo_dist(p1::Int64,ω::Float64)
+# function mixed_expo_dist(p1::Int64,ω::Real)
 #     α = ones(1, p1) / p 
 #     α = (ones(p1)/p)'
 #     return PHDist(α, Matrix(-ω*I(p1)))

@@ -1,12 +1,8 @@
-include("MAPH.jl")
-include("moment_function.jl")
-
 """
 $(TYPEDEF)
-The struct representing the CTMC with an underlying maph distribution
-$(TYPEDEF)
-"""
 
+Defines a coninutous time markov chain
+"""
 struct ContinuousTimeMarkovChain
     "the transient states"
     transient_states:: Vector{Int}
@@ -15,16 +11,16 @@ struct ContinuousTimeMarkovChain
     absorbing_states:: Vector{Int}
 
     "transient probabilities"
-    P_λ ::Matrix{Float64}
+    P_λ ::Matrix{<:Real}
 
     "absorbing probabilities"
-    P_μ:: Matrix{Float64}
+    P_μ:: Matrix{<:Real}
 
     "jumping chain"
-    P_jump :: Matrix{Float64}
+    P_jump :: Matrix{<:Real}
 
     "diagonal rate"
-    Λ:: Vector{Float64}
+    Λ:: Vector{<:Real}
 
 end
 
@@ -41,21 +37,15 @@ function MAPH_TO_CTMC(maph::MAPHDist)
     return ContinuousTimeMarkovChain(transient_states, absorbing_states, P_λ, P_μ, P_jump, Λ)
 end
 
-
-
-"""
-The struct which record time and absorbing state of a CTMC process 
-$(TYPEDEF)
-"""
 struct SingleObservation
     "absorbing state"
     a::Int
 
     "absorbing time"
-    y::Float64
+    y::Real
 
     "sojourn_times"
-    sojourn_times::Vector{Float64}
+    sojourn_times::Vector{<:Real}
 
     "all_states"
     all_states::Vector{Int}
@@ -67,7 +57,7 @@ function rand(maph::MAPHDist; full_trace = true)
     ctmc = MAPH_TO_CTMC(maph) 
 
     states = Int[]
-    sojourn_times = Float64[]
+    sojourn_times = Real[]
     
     state = sample(ctmc.transient_states, weights(maph.α))
     t = 0.0
@@ -85,24 +75,21 @@ function rand(maph::MAPHDist; full_trace = true)
     return SingleObservation(state, t, sojourn_times, states)
 end
 
-
 """
 $(TYPEDEF)
-The struct which representing the statistics to fit the MAPH distribtuion 
-$(TYPEDFIELDS)
 """
 struct MAPHSufficientStats
     "initial starts"
-    B::Vector{Float64} 
+    B::Vector{<:Real} 
 
     "time spent"
-    Z::Vector{Float64} 
+    Z::Vector{<:Real} 
 
     "transitions between transient states"
-    M::Matrix{Float64} 
+    M::Matrix{<:Real} 
 
     "transitions between transient to abosrbing states"
-    N::Matrix{Float64} 
+    N::Matrix{<:Real} 
 
 end
 
@@ -114,34 +101,30 @@ end
 -(ss1::MAPHSufficientStats, ss2::MAPHSufficientStats) = MAPHSufficientStats(ss1.B-ss2.B, ss1.Z-ss2.Z, ss1.M - ss2.M, ss1.N - ss2.N)
 *(n::Real, ss::MAPHSufficientStats) = MAPHSufficientStats(ss.B *n, ss.Z*n, ss.M*n, ss.N*n)
 
-function very_crude_c_solver(y::Float64, i::Int, j::Int, k::Int, maph::MAPHDist)
+function very_crude_c_solver(y::Real, i::Int, j::Int, k::Int, maph::MAPHDist)
     quadgk(u -> (maph.α * exp(maph.T*u))[i] * (exp(maph.T*(y-u))*maph.D[:,k])[j] , 0, y, rtol=1e-8) |> first
 end
 
-"""
-Compute the expected value of the sufficient stats
-"""
 function compute_sufficient_stats(observation::SingleObservation, 
                             maph::MAPHDist; 
                             c_solver = very_crude_c_solver)
 
     m, n = model_size(maph)
     
-    a(y::Float64) = maph.α * exp(maph.T*y)
-    b(y::Float64, k::Int) = exp(maph.T*y) * maph.D[:,k]
-    c(y::Float64, i::Int, j::Int, k::Int) = very_crude_c_solver(y, i, j, k, maph)
+    a(y::Real) = maph.α * exp(maph.T*y)
+    b(y::Real, k::Int) = exp(maph.T*y) * maph.D[:,k]
+    c(y::Real, i::Int, j::Int, k::Int) = very_crude_c_solver(y, i, j, k, maph)
 
-    EB(y::Float64, i::Int, k::Int) = maph.α[i] * b(y, k)[i] / reduce(vcat, (maph.α * b(y, k)))
-    EZ(y::Float64, i::Int, k::Int) = c(y, i, i, k) / reduce(vcat, (maph.α * b(y,k)))
-    ENT(y::Float64, i::Int, j::Int, k::Int) = i != j ? maph.T[i,j] .* c(y, i, j, k) / reduce(vcat, (maph.α * b(y,k))) : 0
-    ENA(y::Float64, i::Int, j::Int, k::Int) = j == k ? a(y)[i] * maph.D[i,k] / reduce(vcat, (maph.α * b(y,k))) : 0 
+    EB(y::Real, i::Int, k::Int) = maph.α[i] * b(y, k)[i] / reduce(vcat, (maph.α * b(y, k)))
+    EZ(y::Real, i::Int, k::Int) = c(y, i, i, k) / reduce(vcat, (maph.α * b(y,k)))
+    ENT(y::Real, i::Int, j::Int, k::Int) = i != j ? maph.T[i,j] .* c(y, i, j, k) / reduce(vcat, (maph.α * b(y,k))) : 0
+    ENA(y::Real, i::Int, j::Int, k::Int) = j == k ? a(y)[i] * maph.D[i,k] / reduce(vcat, (maph.α * b(y,k))) : 0 
 
     B = map(i -> EB(observation.y, i, observation.a - n + 1), 1:m)
     Z = map(i -> EZ(observation.y, i, observation.a - n + 1), 1:m)
 
     M = reduce(hcat, map(i ->  map(j -> ENT(observation.y, i, j, observation.a - n + 1), 1:m), 1:m))
-    N = reduce(hcat, map(j -> map(i -> ENA(observation.y, i, j, observation.a -n + 1) , 1:m ), 1:n))
-    
+    N = reduce(hcat, map(j -> map(i -> ENA(observation.y, i, j, observation.a -n + 1) , 1:m ), 1:n)) 
     return MAPHSufficientStats(B, Z, M ,N)
 end
 

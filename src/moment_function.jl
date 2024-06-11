@@ -1,7 +1,3 @@
-include("MAPH.jl")
-include("PHDist.jl")
-
-
 model_size(ph::PHDist) = length(ph.α)
 model_size(maph::MAPHDist) = (m = size(maph.T, 1), n = size(maph.D, 2)) #transient is m and abosrbing is n
 
@@ -13,11 +9,11 @@ var(maph::MAPHDist) = kth_moment(maph, 2) - mean(maph).^2
 scv(maph::MAPHDist) = var(maph) ./ (mean(maph).^2) 
 
 
-function sub_distribution(maph::MAPHDist, k::Real, xs::Vector{Float64})
+function sub_distribution(maph::MAPHDist, k::Real, xs::Vector{Real})
     return reduce(vcat, map(x ->  maph.α * (exp(x * maph.T) - I) * inv(maph.T) * maph.D[:,k], xs))
 end
 
-function sub_pdf(maph::MAPHDist, k::Real, xs::Vector{Float64})
+function sub_pdf(maph::MAPHDist, k::Real, xs::Vector{Real})
     return  reduce(vcat, map(x ->  maph.α * exp(maph.T*x) * maph.D[:, k], xs))
 end
 

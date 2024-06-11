@@ -1,7 +1,3 @@
-include("MAPH.jl")
-include("MAPHStatistics.jl")
-
-
 function fit!(all_obs::Vector{SingleObservation}, maph::MAPHDist)
     m, n = model_size(maph)
 
@@ -20,7 +16,7 @@ function fit!(all_obs::Vector{SingleObservation}, maph::MAPHDist)
     ρ = replace(reduce(hcat, map(k -> stats[k].B ./ s_stats.B, 1:n)), NaN => 0)
     @assert sum(α) ≈ 1.0
     @assert sum(α .* ρ) ≈ 1.0
-    @assert all(q .> 0)
+    @assert all(q .≥ 0)  "we have $q"
  
     P = map(k -> stats[k].M ./ sum(stats[k].N), 1:length(stats) )
 

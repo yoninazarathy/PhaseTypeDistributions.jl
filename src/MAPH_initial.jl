@@ -1,7 +1,3 @@
-include("MAPH.jl")
-include("MAPHStatistics.jl")
-
-
 function maph_initialization(all_obs::Vector{SingleObservation}, m::Int; ω::Real = 100.0, θ = 30.0)
     @assert m ≥ 1 "cannot have empty phase"
 
@@ -26,11 +22,11 @@ function maph_initialization(all_obs::Vector{SingleObservation}, m::Int; ω::Rea
     @info "each of the absorbing state requires num of phases as $(phases_required_per_state)"
 
     if m_required ≤ m - 1
-        @info "we have enough phases to start the maph_initialization, states used are absorbing state $(Int.(collect(keys(prob_per_state))))"
+        @debug "we have enough phases to start the maph_initialization, states used are absorbing state $(Int.(collect(keys(prob_per_state))))"
         num_phases = m_required
         num_phase_type_distributions = length(keys(prob_per_state))
-    elseif m-1 < phases_required_per_state[collect(keys(prob_per_state))[1]]
-        @info "will initialize with an exponential distribution"
+    elseif m - 1 < phases_required_per_state[collect(keys(prob_per_state))[1]]
+        @debug "will initialize with an exponential distribution"
         num_phases = 0
         maph = (α = ones(1, m) ./ m ; T = diagm(-ω .* ones(m)) ; D = ω .* ones(m, length(prob_per_state)) ./ (length(prob_per_state)) ; MAPH_constructor(α, T, D))
         return maph
@@ -55,10 +51,10 @@ function maph_initialization(all_obs::Vector{SingleObservation}, m::Int; ω::Rea
     ph_distributions = Dict()
     for key ∈ collect(keys(prob_per_state))[1:num_phase_type_distributions]
         if scv_per_state[key] > 1.0
-            @info "we now construct a hyper exponential distribution for absorbing state $(key), with mean $(mean_per_state[key]) and scv $(scv_per_state[key])"
+            @debug "we now construct a hyper exponential distribution for absorbing state $(key), with mean $(mean_per_state[key]) and scv $(scv_per_state[key])"
             ph_distributions[key] = hyper_exp_dist(mean_per_state[key], scv_per_state[key])
         else
-            @info "we now construct a hypo exponential distribution for absorbing state $(key), with mean $(mean_per_state[key]) and scv $(scv_per_state[key])"
+            @debug "we now construct a hypo exponential distribution for absorbing state $(key), with mean $(mean_per_state[key]) and scv $(scv_per_state[key])"
             ph_distributions[key] = hypo_exp_dist(mean_per_state[key], scv_per_state[key])
         end
     end
@@ -66,8 +62,6 @@ function maph_initialization(all_obs::Vector{SingleObservation}, m::Int; ω::Rea
     expo_phases = m - Int(num_phases)
     @assert expo_phases ≥ 1
  
-    # α = hcat(ones(1, expo_phases) ./ (expo_phases), zeros(1, Int(num_phases)))
-    # α = ones(1, expo_phases + Int(num_phases))/(expo_phases + Int(num_phases))
     α = ones(1, m)./m
     D_expo = zeros(expo_phases, length(prob_per_state))
     T_expo = zeros(expo_phases, expo_phases)
@@ -82,7 +76,6 @@ function maph_initialization(all_obs::Vector{SingleObservation}, m::Int; ω::Rea
            D = vcat(D, D_temp)
         end
     end
-
     #Setup transitions from initial exponential into the PH distributions 
     T_expo2ph = zeros(expo_phases, m-expo_phases)
     i = 1
@@ -94,10 +87,19 @@ function maph_initialization(all_obs::Vector{SingleObservation}, m::Int; ω::Rea
     end
 
     T[1:expo_phases, (expo_phases+1):end] .= T_expo2ph
-    T[2:end, 1] .= θ
-    T[2:end, 2:end] = T[2:end, 2:end] - θ.*I
-    
 
+    for i = 1:expo_phases
+        T[(i+1):end, i] .= θ
+    end
+    #regularise the diagonal
+    for i = 1:m
+        row_sum = sum(T[i,:]) + sum(D[i,:])
+        T[i,i] -= row_sum
+    end
+
+    @assert sum(hcat(T, D), dims =2) ≈ zeros(m, 1)
+    @assert sum(α) == 1
+    @assert all(diag(T) .< 0)
     @info "now we finish initialization!"
 
     return MAPH_constructor(α, T, D)
