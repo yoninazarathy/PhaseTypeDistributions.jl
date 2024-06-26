@@ -29,11 +29,11 @@ ys = collect(0:0.001:2)
 # pdfs = sub_distribution.(Ref(maph2), collect(1:3), Ref(ys))
 
 all_obs = map(n -> rand(maph), 1:200)
-maph_fit = maph_initialization(all_obs, 8; ω = 30.0,  θ = 5.0)
+maph_fit = maph_initialization(all_obs, 2; ω = 30.0,  θ = 5.0)
+EM_fit!(all_obs, maph_fit)
 
-for i ∈ 1:40
-    fit!(all_obs, maph_fit)
-end
+
+
 # @show get_emperical_absorb_prob(all_obs)
 
 # for k = 1:20
@@ -41,36 +41,4 @@ end
 # end
 
 # pdfs2 = sub_distribution.(Ref(maph), collect(1:3), Ref(ys))
-
-
-# plot(ys, pdfs[1],  label = "original maph absorbed in state $(1+3)")
-
-
-# gr()
-# plot(ys, pdfs[1], label = "original maph absorbed in state 3")
-# for i = 2:3
-#     display(plot!(ys, pdfs[i],  label = "original maph absorbed in state $(i+2)"))
-# end
-
-# for i = 1:3
-#     display(plot!(ys, pdfs2[i],  label = "fitted maph absorbed in state $(i+2)", ls = :dot, lw = 2))
-# end
-# include("test_maph_fit.jl")
-# include("test_maph_init.jl")
-# include("test_maph_sufficient_stats.jl")
-# include("test_structured_ph.jl")
-# include("test_maph_basic.jl")
-
-
-
-
-# @test maph_type_construction_tests()
-# @test hypoexp_test()
-# @test hyperexp_test()
-# @test maph_moments_and_rand_test(;N=1000000)
-# @test test_fit_example1(;sim_runs=10^2)
-# @test test_maph_init();
-# @test test_maph_perturbation()
-# @test full_trace_sufficient_stats_test()
-#@test sufficient_stats_test()
 
