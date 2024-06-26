@@ -97,8 +97,8 @@ function maph_initialization(all_obs::Vector{SingleObservation}, m::Int; ω::Rea
         T[i,i] -= row_sum
     end
 
-    @assert sum(hcat(T, D), dims =2) ≈ zeros(m, 1)
-    @assert sum(α) == 1
+    @assert isapprox(sum(hcat(T, D)), 0.0, atol = 1e-5)
+    @assert isapprox(sum(α), 1.0, atol = 1e-5)
     @assert all(diag(T) .< 0)
     @info "now we finish initialization!"
 
