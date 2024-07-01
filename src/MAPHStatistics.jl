@@ -89,7 +89,7 @@ struct MAPHSufficientStats
     M::Matrix{<:Real} 
 
     "transitions between transient to abosrbing states"
-    N::Matrix{<:Real} 
+    N::Vector{<:Real} 
 
 end
 
@@ -118,13 +118,16 @@ function compute_sufficient_stats(observation::SingleObservation,
     EB(y::Real, i::Int, k::Int) = maph.α[i] * b(y, k)[i] / reduce(vcat, (maph.α * b(y, k)))
     EZ(y::Real, i::Int, k::Int) = c(y, i, i, k) / reduce(vcat, (maph.α * b(y,k)))
     ENT(y::Real, i::Int, j::Int, k::Int) = i != j ? maph.T[i,j] .* c(y, i, j, k) / reduce(vcat, (maph.α * b(y,k))) : 0
-    ENA(y::Real, i::Int, j::Int, k::Int) = j == k ? a(y)[i] * maph.D[i,k] / reduce(vcat, (maph.α * b(y,k))) : 0 
+    # ENA(y::Real, i::Int, j::Int, k::Int) = j == k ? a(y)[i] * maph.D[i,k] / reduce(vcat, (maph.α * b(y,k))) : 0 
+
+    ENA(y::Real, i::Int, k::Int) =  a(y)[i] * maph.D[i,k] / reduce(vcat, (maph.α * b(y,k))) 
 
     B = map(i -> EB(observation.y, i, observation.a - n + 1), 1:m)
     Z = map(i -> EZ(observation.y, i, observation.a - n + 1), 1:m)
 
     M = reduce(hcat, map(i ->  map(j -> ENT(observation.y, i, j, observation.a - n + 1), 1:m), 1:m))
-    N = reduce(hcat, map(j -> map(i -> ENA(observation.y, i, j, observation.a -n + 1) , 1:m ), 1:n)) 
+    N = [ENA(observation.y, i, observation.a - n + 1) for i =1:m]
+    # N = reduce(hcat, map(j -> map(i -> ENA(observation.y, i, j, observation.a -n + 1) , 1:m ), 1:n)) 
     return MAPHSufficientStats(B, Z, M ,N)
 end
 
@@ -141,6 +144,7 @@ function stats_filter(all_obs::Vector{SingleObservation}, lower_quantile = 0.01,
     filtered_data_length = length(reduce(vcat, filtered_obs))
 
     unique_absorbing_state = sort(unique(all_absorbing_states))
+    # @show unique_absorbing_state
     #sort the obs data to different absorb states
     data_sorted_by_states = map(k-> filter(obs -> obs.a == k, filtered_obs), unique_absorbing_state)
 
@@ -178,11 +182,11 @@ function get_emperical_statistics(all_obs::Vector{SingleObservation},  ω::Real)
 
 end
 
-function compute_expected_stats(all_obs::Vector{SingleObservation}, maph::MAPHDist)
+function compute_sorted_stats(all_obs::Vector{SingleObservation}, maph::MAPHDist)
     _, data_sorted_by_states = stats_filter(all_obs)
-    expected_stats_by_different_states = map(data_by_absorb_state -> mean(compute_sufficient_stats.(data_by_absorb_state, Ref(maph))), data_sorted_by_states)
+    stats_by_different_states = map(data_by_absorb_state -> compute_sufficient_stats.(data_by_absorb_state, Ref(maph)), data_sorted_by_states)
 
-    return expected_stats_by_different_states
+    return stats_by_different_states
 end
 
 

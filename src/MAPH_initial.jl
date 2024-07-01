@@ -2,6 +2,7 @@ function maph_initialization(all_obs::Vector{SingleObservation}, m::Int; ω::Rea
     @assert m ≥ 1 "cannot have empty phase"
 
     prob_per_state = get_emperical_absorb_prob(all_obs)
+    @show prob_per_state
     mean_per_state, scv_per_state= get_emperical_statistics(all_obs, ω)
     prob_per_state = sort(prob_per_state; byvalue = true, rev = true)
 

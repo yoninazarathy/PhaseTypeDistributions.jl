@@ -9,15 +9,16 @@ var(maph::MAPHDist) = kth_moment(maph, 2) - mean(maph).^2
 scv(maph::MAPHDist) = var(maph) ./ (mean(maph).^2) 
 
 
-function sub_distribution(maph::MAPHDist, k::Real, xs::Vector{Real})
+function sub_distribution(maph::MAPHDist, k::Real, xs::Vector{Float64})
     return reduce(vcat, map(x ->  maph.α * (exp(x * maph.T) - I) * inv(maph.T) * maph.D[:,k], xs))
 end
 
-function sub_pdf(maph::MAPHDist, k::Real, xs::Vector{Real})
+function sub_pdf(maph::MAPHDist, k::Real, xs::Vector{Float64})
     return  reduce(vcat, map(x ->  maph.α * exp(maph.T*x) * maph.D[:, k], xs))
 end
 
 function mgf(maph::MAPHDist, k::Real, zs::Vector{Real})
+    
     return reduce(vcat, map(z -> -maph.α * inv(z*I + maph.T) * maph.D[:, k], zs))
 end
 
