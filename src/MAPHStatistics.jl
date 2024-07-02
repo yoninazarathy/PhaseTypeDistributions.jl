@@ -102,7 +102,7 @@ end
 *(n::Real, ss::MAPHSufficientStats) = MAPHSufficientStats(ss.B *n, ss.Z*n, ss.M*n, ss.N*n)
 
 function very_crude_c_solver(y::Real, i::Int, j::Int, k::Int, maph::MAPHDist)
-    quadgk(u -> (maph.α * exp(maph.T*u))[i] * (exp(maph.T*(y-u))*maph.D[:,k])[j] , 0, y, rtol=1e-8) |> first
+    quadgk(u -> (maph.α * exp(maph.T*u))[i] * (exp(maph.T*(y-u))*maph.D[:,k])[j] , 0, y, rtol=1e-5) |> first
 end
 
 function compute_sufficient_stats(observation::SingleObservation, 
@@ -110,17 +110,18 @@ function compute_sufficient_stats(observation::SingleObservation,
                             c_solver = very_crude_c_solver)
 
     m, n = model_size(maph)
-    
     a(y::Real) = maph.α * exp(maph.T*y)
     b(y::Real, k::Int) = exp(maph.T*y) * maph.D[:,k]
     c(y::Real, i::Int, j::Int, k::Int) = very_crude_c_solver(y, i, j, k, maph)
 
-    EB(y::Real, i::Int, k::Int) = maph.α[i] * b(y, k)[i] / reduce(vcat, (maph.α * b(y, k)))
-    EZ(y::Real, i::Int, k::Int) = c(y, i, i, k) / reduce(vcat, (maph.α * b(y,k)))
-    ENT(y::Real, i::Int, j::Int, k::Int) = i != j ? maph.T[i,j] .* c(y, i, j, k) / reduce(vcat, (maph.α * b(y,k))) : 0
+    non_degenerate_condtion(y::Real, k::Int) = (sum(b(y,k)) != 0)
+    EB(y::Real, i::Int, k::Int) = non_degenerate_condtion(y, k) ? (maph.α[i] * b(y, k)[i] / reduce(vcat, (maph.α * b(y, k)))) : maph.α[i]
+    EZ(y::Real, i::Int, k::Int) = non_degenerate_condtion(y, k) ? c(y, i, i, k) / reduce(vcat, (maph.α * b(y,k))) : 0
+    ENT_non_diagonal(y::Real, i::Int, j::Int, k::Int) = non_degenerate_condtion(y,k) ? maph.T[i,j] .* c(y, i, j, k) / reduce(vcat, (maph.α * b(y,k))) : 0
+    ENT(y::Real, i::Int, j::Int, k::Int) = i != j ?  ENT_non_diagonal(y::Real, i::Int, j::Int, k::Int) : 0
     # ENA(y::Real, i::Int, j::Int, k::Int) = j == k ? a(y)[i] * maph.D[i,k] / reduce(vcat, (maph.α * b(y,k))) : 0 
 
-    ENA(y::Real, i::Int, k::Int) =  a(y)[i] * maph.D[i,k] / reduce(vcat, (maph.α * b(y,k))) 
+    ENA(y::Real, i::Int, k::Int) =  non_degenerate_condtion(y,k) ? a(y)[i] * maph.D[i,k] / reduce(vcat, (maph.α * b(y,k))) : 0.0
 
     B = map(i -> EB(observation.y, i, observation.a - n + 1), 1:m)
     Z = map(i -> EZ(observation.y, i, observation.a - n + 1), 1:m)
@@ -132,7 +133,7 @@ function compute_sufficient_stats(observation::SingleObservation,
 end
 
 
-function stats_filter(all_obs::Vector{SingleObservation}, lower_quantile = 0.01, upper_quantile = 0.99)
+function data_filter(all_obs::Vector{SingleObservation}, lower_quantile = 0.01, upper_quantile = 0.99)
     all_absorbing_states = map(obs -> obs.a, all_obs)
     all_absorbing_times = map(obs -> obs.y, all_obs)
     min_time = quantile(all_absorbing_times, lower_quantile)
@@ -154,11 +155,11 @@ end
 
 
 function get_emperical_absorb_prob(all_obs::Vector{SingleObservation})
-    data_length, stats = stats_filter(all_obs)
-    absorb_probs= map(stat -> length(reduce(vcat, stat))/ data_length, stats)
+    data_length, data = data_filter(all_obs)
+    absorb_probs= map(dat -> length(reduce(vcat, dat))/ data_length, data)
     prob_per_state = Dict()
-    for k ∈ eachindex(stats)
-        prob_per_state[stats[k][1].a] = absorb_probs[k]
+    for k ∈ eachindex(data)
+        prob_per_state[data[k][1].a] = absorb_probs[k]
     end
 
     return prob_per_state
@@ -166,16 +167,16 @@ end
 
 
 function get_emperical_statistics(all_obs::Vector{SingleObservation},  ω::Real)
-    _, stats = stats_filter(all_obs)
+    _, data = data_filter(all_obs)
     mean_per_state  = Dict()
     scv_per_state = Dict()
-    for k ∈ eachindex(stats)
-        absorbing_time = map(stat -> stat.y, stats[k])
+    for k ∈ eachindex(data)
+        absorbing_time = map(dat -> dat.y, data[k])
         emperical_mean= mean(absorbing_time)
         emperical_scv = var(absorbing_time) / mean(absorbing_time)^2
 
-        mean_per_state[stats[k][1].a] = emperical_mean - 1 / ω
-        scv_per_state[stats[k][1].a] = (emperical_scv * (ω * emperical_mean)^2 -1) / (ω * emperical_mean)^2
+        mean_per_state[data[k][1].a] = emperical_mean - 1 / ω
+        scv_per_state[data[k][1].a] = (emperical_scv * (ω * emperical_mean)^2 -1) / (ω * emperical_mean)^2
     end
 
     return mean_per_state, scv_per_state
@@ -183,10 +184,10 @@ function get_emperical_statistics(all_obs::Vector{SingleObservation},  ω::Real)
 end
 
 function compute_sorted_stats(all_obs::Vector{SingleObservation}, maph::MAPHDist)
-    _, data_sorted_by_states = stats_filter(all_obs)
+    data_length, data_sorted_by_states = data_filter(all_obs)
     stats_by_different_states = map(data_by_absorb_state -> compute_sufficient_stats.(data_by_absorb_state, Ref(maph)), data_sorted_by_states)
 
-    return stats_by_different_states
+    return data_length, stats_by_different_states
 end
 
 

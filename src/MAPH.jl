@@ -51,7 +51,9 @@ end
 
 function T_D_from_R_P_q(q::Vector{<:Real}, R::Matrix{<:Real}, P::Vector{<:Matrix{<:Real}})
     m = length(q)
-    k = 1 #QQQQ this is some fixed k (abosrbing state - as conversion will work the same for all k)
+    valid_P = findall(map(k -> !any(isnan.(P[k])), 1:length(P)))
+    k = rand(valid_P)
+    @show k 
     T = [i==j ? -q[i] : q[i] * P[k][i,j] * R[i,k] / R[j,k] for i in 1:m, j in 1:m]
     D = -T * R
     return T, D
