@@ -9,12 +9,14 @@ end
 
 function M_step!(data_length::Int, stats::Vector{MAPHSufficientStats}, sum_stats::MAPHSufficientStats, maph::MAPHDist)
     m, n = model_size(maph)
-    @time number_times_exit = [sum_stats.N[i] + sum(sum_stats.M[i,:]) for i ∈ 1:m]
-    @time number_times_exit_per_state = [[stats[k].N[i] + sum(stats[k].M[i, :]) for i ∈ 1:m] for k ∈ 1:n]
-    @time new_α =  sum_stats.B ./data_length
-    @views new_q = [number_times_exit[i] / sum_stats.Z[i] for i ∈ 1:m]
-    @time @views new_ρ = [stats[k].B[i] / sum_stats.B[i] for i = 1:m, k = 1:n]
-    @time @views new_P = [[stats[k].M[i,j] / number_times_exit_per_state[k][i] for i ∈ 1:m, j ∈ 1:m ] for k ∈ 1:n]
+    number_times_exit = [sum_stats.N[i] + sum(sum_stats.M[i,:]) for i ∈ 1:m]
+    number_times_exit_per_state = [[stats[k].N[i] + sum(stats[k].M[i, :]) for i ∈ 1:m] for k ∈ 1:n]
+    new_α =  sum_stats.B ./data_length
+    new_q = [number_times_exit[i] / sum_stats.Z[i] for i ∈ 1:m]
+    @show sum_stats.Z
+    @show number_times_exit
+    new_ρ = [stats[k].B[i] / sum_stats.B[i] for i = 1:m, k = 1:n]
+    new_P = [[stats[k].M[i,j] / number_times_exit_per_state[k][i] for i ∈ 1:m, j ∈ 1:m ] for k ∈ 1:n]
 
     @assert sum(new_α) ≈ 1.0
     @assert sum(new_α .* new_ρ) ≈ 1.0
@@ -34,9 +36,6 @@ function EM_fit!(all_obs::Vector{SingleObservation}, maph::MAPHDist, iterations:
     for _ ∈ 1:iterations
         data_length, stats, s_stats = E_step!(all_obs, maph)
         M_step!(data_length, stats, s_stats, maph)
-        @show mean(maph)
-        @show absorption_probs(maph)
-        @show scv(maph)
     end
 end
 

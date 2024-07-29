@@ -102,7 +102,7 @@ end
 *(n::Real, ss::MAPHSufficientStats) = MAPHSufficientStats(ss.B *n, ss.Z*n, ss.M*n, ss.N*n)
 
 function very_crude_c_solver(y::Real, i::Int, j::Int, k::Int, maph::MAPHDist)
-    quadgk(u -> (maph.α * exp(maph.T*u))[i] * (exp(maph.T*(y-u))*maph.D[:,k])[j] , 0, y, rtol=1e-5) |> first
+    max(quadgk(u -> (maph.α * exp(maph.T*u))[i] * (exp(maph.T*(y-u))*maph.D[:,k])[j] , 0, y, rtol=1e-3) |> first, 0)
 end
 
 function compute_sufficient_stats(observation::SingleObservation, 

@@ -50,14 +50,44 @@ end
 
 
 function T_D_from_R_P_q(q::Vector{<:Real}, R::Matrix{<:Real}, P::Vector{<:Matrix{<:Real}})
+    #add equation 7 check the conditon 
+    #add a helper function to check the conditions and fix P 
     m = length(q)
     valid_P = findall(map(k -> !any(isnan.(P[k])), 1:length(P)))
-    k = rand(valid_P)
-    @show k 
+    @show valid_P
+    k = 1
     T = [i==j ? -q[i] : q[i] * P[k][i,j] * R[i,k] / R[j,k] for i in 1:m, j in 1:m]
     D = -T * R
     return T, D
 end
+
+function is_valid_α_R_P_q(α::Matrix{<:Real}, q::Vector{<:Real}, R::Matrix{<:Real}, P::Vector{<:Matrix{<:Real}})
+    m = length(α)
+    n = length(P)
+    for k_1 ∈ 1:n, k_2 ∈ 1:n
+        if k_1 == k_2 
+            continue
+        end
+
+        for i ∈ 1:m
+            for j ∈ 1:m
+                if !(P[k_1][i,j] * (R[i,k_1]/ R[j,k_1]) ≈ P[k_2][i,j] * (R[i,k_2]/ R[j,k_2]))
+                    diff = P[k_1][i,j] * (R[i,k_1]/ R[j,k_1])-  P[k_2][i,j] * (R[i,k_2]/ R[j,k_2])
+                    @show k_1, k_2, i,j, diff
+                    # return false
+                end
+            end
+        end
+    end 
+
+    return true 
+
+end
+
+function is_valid_α_T_D(α::Matrix{<:Real}, T:: Matrix{<:Real}, D::Matrix{<:Real})
+
+end
+
 
 function MAPH_constructor(α::Matrix{<:Real}, T:: Matrix{<:Real}, D::Matrix{<:Real})
     if is_degenerate_maph(T)

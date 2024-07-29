@@ -20,17 +20,17 @@ D = [μ41 μ42 μ43; μ51 μ52 μ53]
 α = [0.5 0.5]
 
 maph = MAPH_constructor(α, T, D )
-maph2 = deepcopy(maph)
+# maph2 = deepcopy(maph)
 
-ys = collect(0:0.001:2)
+# ys = collect(0:0.001:2)
 
-# pdf1 = sub_distribution(maph2, 1, ys)
+# # pdf1 = sub_distribution(maph2, 1, ys)
 
-# pdfs = sub_distribution.(Ref(maph2), collect(1:3), Ref(ys))
+# # pdfs = sub_distribution.(Ref(maph2), collect(1:3), Ref(ys))
 
-all_obs = map(n -> rand(maph), 1:200)
+all_obs = map(n -> rand(maph), 1:100)
 maph_fit = maph_initialization(all_obs, 10; ω = 30.0,  θ = 5.0)
-EM_fit!(all_obs, maph_fit)
+# # EM_fit!(all_obs, maph_fit, 1)
 
 
 
