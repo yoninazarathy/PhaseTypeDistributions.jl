@@ -61,32 +61,27 @@ function T_D_from_R_P_q(q::Vector{<:Real}, R::Matrix{<:Real}, P::Vector{<:Matrix
     return T, D
 end
 
-function is_valid_α_R_P_q(α::Matrix{<:Real}, q::Vector{<:Real}, R::Matrix{<:Real}, P::Vector{<:Matrix{<:Real}})
-    m = length(α)
-    n = length(P)
-    for k_1 ∈ 1:n, k_2 ∈ 1:n
-        if k_1 == k_2 
-            continue
-        end
+function is_valid_α_R_P_q(maph::MAPHDist)
+    P, R  = maph.P, maph.R
+    m, n = length(maph.α), length(P)
+    R_factors = map(k -> [ P[1][i,j] * R[i,1]*R[j,k]/(R[j,1]*R[i,k]) for i ∈ 1:m, j ∈ 1:m], 2:n)
+    
+    new_P = 
+    new_P = reduce(vcat, [P[1], [P[k] * R_factors[k] for k = 2:n]])
 
-        for i ∈ 1:m
-            for j ∈ 1:m
-                if !(P[k_1][i,j] * (R[i,k_1]/ R[j,k_1]) ≈ P[k_2][i,j] * (R[i,k_2]/ R[j,k_2]))
-                    diff = P[k_1][i,j] * (R[i,k_1]/ R[j,k_1])-  P[k_2][i,j] * (R[i,k_2]/ R[j,k_2])
-                    @show k_1, k_2, i,j, diff
-                    # return false
-                end
-            end
-        end
-    end 
+    isvalid = all(map(k -> P[k] ≈ R_factors[k-1], 2:n))
 
-    return true 
+    
+
+    if !isvalid
+        diff = map(k -> P[k] - R_factors[k-1], 2:n)
+        display(diff[2])
+    end
+    return isvalid
 
 end
 
-function is_valid_α_T_D(α::Matrix{<:Real}, T:: Matrix{<:Real}, D::Matrix{<:Real})
-
-end
+# function is_valid_α_T_D(maph::MAPHDistributions)
 
 
 function MAPH_constructor(α::Matrix{<:Real}, T:: Matrix{<:Real}, D::Matrix{<:Real})

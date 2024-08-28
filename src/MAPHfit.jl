@@ -34,8 +34,8 @@ end
 
 function EM_fit!(all_obs::Vector{SingleObservation}, maph::MAPHDist, iterations::Int = 20)
     for _ ∈ 1:iterations
-        data_length, stats, s_stats = E_step!(all_obs, maph)
-        M_step!(data_length, stats, s_stats, maph)
+        @time data_length, stats, s_stats = E_step!(all_obs, maph)
+        @time M_step!(data_length, stats, s_stats, maph)
     end
 end
 
