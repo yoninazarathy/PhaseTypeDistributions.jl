@@ -13,14 +13,20 @@ Random.seed!(2)
 # include(".../src/moment_function")
 # include(".../")
 
-Λ₄, λ45, λ54, Λ₅ = 15.0, 5.0, 7.0, 16.0
-μ41, μ42, μ43, μ51, μ52, μ53 = 4.0, 3.0, 3.0, 1.0, 7.0, 1.0 
-T = [-Λ₄ λ45; λ54 -Λ₅]
-D = [μ41 μ42 μ43; μ51 μ52 μ53]
-α = [0.5 0.5]
+# Λ₄, λ45, λ54, Λ₅ = 15.0, 5.0, 7.0, 16.0
+# μ41, μ42, μ43, μ51, μ52, μ53 = 4.0, 3.0, 3.0, 1.0, 7.0, 1.0 
+# T = [-Λ₄ λ45; λ54 -Λ₅]
+# D = [μ41 μ42 μ43; μ51 μ52 μ53]
+# α = [0.5 0.5]
 
-maph = MAPH_constructor(α, T, D )
-maph2 = deepcopy(maph)
+# maph = MAPH_constructor(α, T, D)
+
+# is_valid_R_P(maph.R, maph.P)
+
+
+maph = maph_random_parameters(3, 5)
+
+# maph2 = deepcopy(maph)
 
 # ys = collect(0:0.001:2)
 
@@ -29,7 +35,9 @@ maph2 = deepcopy(maph)
 # # pdfs = sub_distribution.(Ref(maph2), collect(1:3), Ref(ys))
 
 all_obs = map(n -> rand(maph), 1:200)
-# maph_fit = maph_initialization(all_obs, 10; ω = 30.0,  θ = 5.0)
+
+# EM_fit!(all_obs, maph, 1)
+maph_fit = maph_initialization(all_obs, 10; ω = 30.0,  θ = 5.0)
 # # # EM_fit!(all_obs, maph_fit, 1
 
 

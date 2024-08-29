@@ -5,7 +5,7 @@ import Base: rand, +, /, -, *
 import Distributions: cdf, ccdf, mean, var
 
 include("MAPH.jl")
-export MAPHDist, MAPH_constructor, update!, T_D_from_R_P_q, is_valid_α_R_P_q
+export MAPHDist, MAPH_constructor, update!, T_D_from_R_P_q, is_valid_R_P
 include("PHDist.jl")
 export get_absorbing_vector
 # include("inference/maph_fit.jl")
@@ -17,6 +17,8 @@ include("MAPHfit.jl")
 export EM_fit!, E_step!, M_step!
 include("MAPH_initial.jl")
 export maph_initialization
+
+export  maph_random_parameters
 
 
 end #end module
