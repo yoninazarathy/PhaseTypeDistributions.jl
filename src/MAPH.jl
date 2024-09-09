@@ -19,14 +19,14 @@ mutable struct MAPHDist
     R::Matrix{<:Real}
 
     """Vector of n copies of m x m matrices, representing the transition probabilities between the MAPH states given absorbing states."""
-    P::Vector{Matrix{<:Real}}
+    P::Matrix{<:Real}
 end
 
 function is_degenerate_maph(T::Matrix{<:Real})
     return !all(abs.(diag(T)) .> sqrt(eps()))
 end
 
-function MAPH_constructor(α::Matrix{<:Real}, T::Matrix{<:Real}, D::Matrix{<:Real}, q::Vector{<:Real}, R::Matrix{<:Real}, P::Vector{ Matrix{<:Real}})
+function MAPH_constructor(α::Matrix{<:Real}, T::Matrix{<:Real}, D::Matrix{<:Real}, q::Vector{<:Real}, R::Matrix{<:Real}, P::Matrix{<:Real})
     @assert size(α, 2) == size(T,1) "must have the same num of phases"
     @assert size(T, 1) == size(T, 2) "T must be a square matrix"
     @assert size(q, 1) == size(T,1) "q must be the same length as the number of rows in T"
@@ -39,30 +39,22 @@ function MAPH_constructor(α::Matrix{<:Real}, T::Matrix{<:Real}, D::Matrix{<:Rea
 end
 
 function R_P_from_T_D(T::Matrix{<:Real}, D::Matrix{<:Real})
-    m, n  = size(D)
+    m, _  = size(D)
     q = -diag(T)
     R = -inv(T)*D
-    # P = map(k-> [i != j ? -T[i,j] * R[j,k] / T[i,i] / R[i,k] : 0 for i in 1:m, j in 1:m], 1:n)
     k = 1
-    P1 = [i != j ? -T[i,j] * R[j,k] / T[i,i] / R[i,k] : 0.0 for i in 1:m, j in 1:m]
-    P = P_update_by_R(R, P1)
-    replace!.(P, NaN => 0)
-    return q, R, P
+    P = [i != j ? -T[i,j] * R[j,k] / T[i,i] / R[i,k] : 0.0 for i in 1:m, j in 1:m]
+
+    return q, R, P 
 end
 
-function P_update_by_R(R::Matrix{<:Real}, P1::Matrix{<:Real})
+function P_matrix_collection_update_by_R(R::Matrix{<:Real}, P1::Matrix{<:Real})
     m, n = size(R)
-    new_P = map(k -> [ P1[i,j] * R[i,1]*R[j,k]/(R[j,1]*R[i,k]) for i ∈ 1:m, j ∈ 1:m], 2:n)
-    pushfirst!(new_P, P1)
-    return new_P
+    P_matrix_collection = map(k -> [ P1[i,j] * R[i,1]*R[j,k]/(R[j,1]*R[i,k]) for i ∈ 1:m, j ∈ 1:m], 2:n)
+    pushfirst!(P_matrix_collection, P1)
+    return P_matrix_collection
 end
 
-
-function is_valid_R_P(R::Matrix{<:Real}, P::Vector{ Matrix{<:Real}})
-    new_P = P_update_by_R(R, P[1])
-    @show new_P
-    return all(new_P .≈  P)
-end
 
 function maph_random_parameters(m::T, n::T, parameterization = :RP) where {T <: Int}
     if parameterization == :TD
@@ -74,12 +66,12 @@ function maph_random_parameters(m::T, n::T, parameterization = :RP) where {T <: 
         q = rand(Exponential(1), m)
         R = rand(m, n)
         R = R ./ sum(R, dims = 2)
-        P1 = rand(m, m)
-        P1 = P1 - Diagonal(P1)
-        P1 = P1 ./ sum(P1, dims = 2) .* rand(m)
-        P_collection = P_update_by_R(R, P1)
+        P = rand(m, m)
+        P = P - Diagonal(P)
+        P = P ./ sum(P, dims = 2) .* rand(m)
+        # P_collection = P_matrix_collection_update_by_R(R, P1)
 
-        return MAPH_constructor(α, q, R, P_collection)
+        return MAPH_constructor(α, q, R, P)
     else
         error("only RP and TD")
     end
@@ -87,38 +79,16 @@ function maph_random_parameters(m::T, n::T, parameterization = :RP) where {T <: 
 end
 
 
-function T_D_from_R_P_q(q::Vector{<:Real}, R::Matrix{<:Real}, P::Vector{<:Matrix{<:Real}})
+function T_D_from_R_P_q(q::Vector{<:Real}, R::Matrix{<:Real}, P::Matrix{<:Real})
     #add equation 7 check the conditon 
     #add a helper function to check the conditions and fix P 
     m = length(q)
-    valid_P = findall(map(k -> !any(isnan.(P[k])), 1:length(P)))
-    @show valid_P
-    k = 1
-    T = [i==j ? -q[i] : q[i] * P[k][i,j] * R[i,k] / R[j,k] for i in 1:m, j in 1:m]
+    T = [i==j ? -q[i] : q[i] * P[i,j] * R[i,1] / R[j,1] for i in 1:m, j in 1:m]
+    # @show [i==j ? 0 : P[i,j] * R[i,1] / R[j,1] for i in 1:m, j in 1:m]
     D = -T * R
     return T, D
 end
 
-# function is_valid_α_R_P_q(maph::MAPHDist)
-#     P, R  = maph.P, maph.R
-#     m, n = length(maph.α), length(P)
-#     R_factors = map(k -> [ P[1][i,j] * R[i,1]*R[j,k]/(R[j,1]*R[i,k]) for i ∈ 1:m, j ∈ 1:m], 2:n)
-    
-#     new_P = reduce(vcat, [P[1], [P[k] * R_factors[k] for k = 2:n]])
-
-#     isvalid = all(map(k -> P[k] ≈ R_factors[k-1], 2:n))
-
-    
-
-#     if !isvalid
-#         diff = map(k -> P[k] - R_factors[k-1], 2:n)
-#         display(diff[2])
-#     end
-#     return isvalid
-
-# end
-
-# function is_valid_α_T_D(maph::MAPHDistributions)
 
 
 function MAPH_constructor(α::Matrix{<:Real}, T:: Matrix{<:Real}, D::Matrix{<:Real})
@@ -132,9 +102,9 @@ function MAPH_constructor(α::Matrix{<:Real}, T:: Matrix{<:Real}, D::Matrix{<:Re
     return MAPHDist(α, T, D, R_P_from_T_D(T, D)...)
 end
 
-MAPH_constructor(α::Matrix{<:Real}, q::Vector{<:Real}, R::Matrix{<:Real}, P::Vector{<:Matrix{<:Real}})= MAPHDist(α, T_D_from_R_P_q(q, R, P)..., q, R, P)
+MAPH_constructor(α::Matrix{<:Real}, q::Vector{<:Real}, R::Matrix{<:Real}, P::Matrix{<:Real})= MAPHDist(α, T_D_from_R_P_q(q, R, P)..., q, R, P)
 
-function update!(maph::MAPHDist, q::Vector{<:Real}, R::Matrix{<:Real}, P::Vector{<:Matrix{<:Real}})
+function update!(maph::MAPHDist, q::Vector{<:Real}, R::Matrix{<:Real}, P::Matrix{<:Real})
     T, D = T_D_from_R_P_q(q, R, P)
     maph.T = T
     maph.D = D

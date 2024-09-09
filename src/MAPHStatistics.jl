@@ -89,17 +89,20 @@ struct MAPHSufficientStats
     M::Matrix{<:Real} 
 
     "transitions between transient to abosrbing states"
-    N::Vector{<:Real} 
+    E::Vector{<:Real} 
+
+    "total number of transitions leaving state i"
+    N::Matrix{<:Real}
 
 end
 
 
 
-+(ss1::MAPHSufficientStats, ss2::MAPHSufficientStats) = MAPHSufficientStats(ss1.B+ss2.B, ss1.Z+ss2.Z, ss1.M+ ss2.M, ss1.N+ss2.N)
-/(ss::MAPHSufficientStats,n::Real) = MAPHSufficientStats(ss.B/n, ss.Z/n, ss.M/n, ss.N/n)
-/(ss1::MAPHSufficientStats,ss2::MAPHSufficientStats) = MAPHSufficientStats(ss1.B ./ ss2.B, ss1.Z ./  ss2.Z, ss1.M ./  ss2.M,  ss1.N ./  ss2.N)
--(ss1::MAPHSufficientStats, ss2::MAPHSufficientStats) = MAPHSufficientStats(ss1.B-ss2.B, ss1.Z-ss2.Z, ss1.M - ss2.M, ss1.N - ss2.N)
-*(n::Real, ss::MAPHSufficientStats) = MAPHSufficientStats(ss.B *n, ss.Z*n, ss.M*n, ss.N*n)
++(ss1::MAPHSufficientStats, ss2::MAPHSufficientStats) = MAPHSufficientStats(ss1.B+ss2.B, ss1.Z+ss2.Z, ss1.M+ ss2.M, ss1.E+ss2.E, ss1.N+ss2.N)
+/(ss::MAPHSufficientStats,n::Real) = MAPHSufficientStats(ss.B/n, ss.Z/n, ss.M/n, ss.E/n, ss.N/n)
+/(ss1::MAPHSufficientStats,ss2::MAPHSufficientStats) = MAPHSufficientStats(ss1.B ./ ss2.B, ss1.Z ./  ss2.Z, ss1.M ./  ss2.M,  ss1.E ./  ss2.E, ss1.N ./ ss2.N )
+-(ss1::MAPHSufficientStats, ss2::MAPHSufficientStats) = MAPHSufficientStats(ss1.B-ss2.B, ss1.Z-ss2.Z, ss1.M - ss2.M, ss1.E - ss2.E, ss1.N - ss2.N)
+*(n::Real, ss::MAPHSufficientStats) = MAPHSufficientStats(ss.B *n, ss.Z*n, ss.M*n, ss.E*n, ss.N*n)
 
 function very_crude_c_solver(y::Real, i::Int, j::Int, k::Int, maph::MAPHDist)
     max(quadgk(u -> (maph.α * exp(maph.T*u))[i] * (exp(maph.T*(y-u))*maph.D[:,k])[j] , 0, y, rtol=1e-3) |> first, 0)
@@ -127,9 +130,9 @@ function compute_sufficient_stats(observation::SingleObservation,
     Z = map(i -> EZ(observation.y, i, observation.a - n + 1), 1:m)
 
     M = reduce(hcat, map(i ->  map(j -> ENT(observation.y, i, j, observation.a - n + 1), 1:m), 1:m))
-    N = [ENA(observation.y, i, observation.a - n + 1) for i =1:m]
-    # N = reduce(hcat, map(j -> map(i -> ENA(observation.y, i, j, observation.a -n + 1) , 1:m ), 1:n)) 
-    return MAPHSufficientStats(B, Z, M ,N)
+    E = [ENA(observation.y, i, observation.a - n + 1) for i =1:m]
+    N = reshape(sum(M, dims = 2), (m,1)) + E    
+    return MAPHSufficientStats(B, Z, M ,E, N)
 end
 
 
