@@ -15,22 +15,49 @@ Random.seed!(2)
 # include(".../src/moment_function")
 # include(".../")
 
-# Λ₄, λ45, λ54, Λ₅ = 15.0, 5.0, 7.0, 16.0
-# μ41, μ42, μ43, μ51, μ52, μ53 = 4.0, 3.0, 3.0, 1.0, 7.0, 1.0 
-# T = [-Λ₄ λ45; λ54 -Λ₅]
-# D = [μ41 μ42 μ43; μ51 μ52 μ53]
+Λ₄, λ45, λ54, Λ₅ = 15.0, 5.0, 7.0, 16.0
+μ41, μ42, μ43, μ51, μ52, μ53 = 4.0, 3.0, 3.0, 1.0, 7.0, 1.0 
+T = [-Λ₄ λ45; λ54 -Λ₅]
+D = [μ41 μ42 μ43; μ51 μ52 μ53]
 α = [0.5 0.5]
 
-m = 2
-n = 3
-P = rand(m, m)
-P = P - Diagonal(P)
-P = P ./ sum(P, dims = 2) .* rand(m)
-R = rand(m, n)
-R = R ./ sum(R, dims = 2)
-q = rand(Exponential(1), m)
+function satisfies_constraint(R, P)
+    m, _ = size(R)
+    for i = 1:m 
+        c = sum(P[i,j]*R[i,1]/R[j,1] for j in 1:m)
+        @show "hey", c, i
+        if c > 1 
+            @show c, i
+            return false
+        end
+    end
+    return true
+end
 
-maph = MAPH_constructor(α, q, R, P)
+Random.seed!(0)
+q = rand(Exponential(1), m)
+α = [0.5 0.5]
+for ell in 1:2
+    m = 2
+    n = 3
+    P = rand(m, m)
+    P = P - Diagonal(P)
+    P = P ./ sum(P, dims = 2) .* rand(m)
+    R = rand(m, n)
+    R = R ./ sum(R, dims = 2)
+    @show ell
+    if satisfies_constraint(R, P)
+        @show "finding good"
+        global Rgood, Pgood = copy(R), copy(P)
+    else
+        @show "finding bad"
+        global Rbad, Pbad = copy(R), copy(P)
+    end
+end
+
+
+maph_bad = MAPH_constructor(α, q, Rbad, Pbad)
+maph_good = MAPH_constructor(α, q, Rgood, Pgood)
 
 
 
