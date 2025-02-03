@@ -13,23 +13,36 @@ function M_step!(data_length::Int, stats::Vector{MAPHSufficientStats}, sum_stats
     number_times_exit_per_state = [[stats[k].N[i] + sum(stats[k].M[i, :]) for i ∈ 1:m] for k ∈ 1:n]
     new_α =  sum_stats.B ./data_length
     new_q = [number_times_exit[i] / sum_stats.Z[i] for i ∈ 1:m]
-    @show sum_stats.Z
-    @show number_times_exit
-    new_ρ = [stats[k].B[i] / sum_stats.B[i] for i = 1:m, k = 1:n]
-    new_P = [[stats[k].M[i,j] / number_times_exit_per_state[k][i] for i ∈ 1:m, j ∈ 1:m ] for k ∈ 1:n]
-
+    new_R = [stats[k].B[i] / sum_stats.B[i] for i = 1:m, k = 1:n]
+    new_U = [stats[1].M[i,j] / number_times_exit_per_state[1][i] for i ∈ 1:m, j ∈ 1:m ]
     @assert sum(new_α) ≈ 1.0
     @assert sum(new_α .* new_ρ) ≈ 1.0
     @assert all(new_q .≥ 0)  "we have $new_q"
     maph.α = reshape(new_α, (1,m)) 
-    update!(maph, new_q, new_ρ, new_P)    
+
+    return MAPHDist(new_α, new_R, new_U)
 
 end
 
+function enforce_constraint_step(R::Matrix, target_U::Matrix)
+    m, n = size(R)
+
+    model = Model(HiGHS.Optimizer)
+
+    @variable(model, u[i=1:m, j = 1:m] >= 0)
+
+    @variable(model, d[i=1:m, j =1:m] >= 0)
+    
+    @constraint(model, [i=1:m, j = 1:m], d[i,j] >= u[i,j] - target_U[i,j])
+    @constraint(model, [i=1:m, j = 1:m], d[i,j] >= -(u[i,j] - target_U[i,j]))
+    @constraint(model, [i=1:m, k = 1:n], sum((R[j,k]/R[j,1]) * u[i,j] for j = 1:m) <= (R[i,k]/R[i,1]))
+
+    @objective(model, Min, sum(d[i,j] for i in 1:m, j in 1:m))
+    optimize!(model)
 
 
-
-
+    
+end
 
 
 function EM_fit!(all_obs::Vector{SingleObservation}, maph::MAPHDist, iterations::Int = 20)

@@ -1,6 +1,6 @@
 module PhaseTypeDistributions
 
-using LinearAlgebra, QuadGK, StatsBase, Distributions, Statistics, ProgressMeter, Dates, StaticArrays
+using LinearAlgebra, QuadGK, StatsBase, Distributions, Statistics, ProgressMeter, Dates, StaticArrays, JuMP, HiGHS
 import Base: rand, +, /, -
 import Distributions: cdf, ccdf, mean, var
 
@@ -23,7 +23,6 @@ export  MAPHDist,
         maximum_likelihood_estimate_second_parameter,
         compute_descriptive_stats
         randn
-
 
 end #end module
 

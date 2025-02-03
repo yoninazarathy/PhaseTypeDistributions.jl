@@ -125,12 +125,12 @@ function compute_sufficient_stats(observation::SingleObservation,
     # ENA(y::Real, i::Int, j::Int, k::Int) = j == k ? a(y)[i] * maph.D[i,k] / reduce(vcat, (maph.α * b(y,k))) : 0 
 
     ENA(y::Real, i::Int, k::Int) =  non_degenerate_condtion(y,k) ? a(y)[i] * maph.D[i,k] / reduce(vcat, (maph.α * b(y,k))) : 0.0
+    
+    B = map(i -> EB(observation.y, i, observation.a - m), 1:m)
+    @time Z = map(i -> EZ(observation.y, i, observation.a - m), 1:m)
 
-    B = map(i -> EB(observation.y, i, observation.a - n + 1), 1:m)
-    Z = map(i -> EZ(observation.y, i, observation.a - n + 1), 1:m)
-
-    M = reduce(hcat, map(i ->  map(j -> ENT(observation.y, i, j, observation.a - n + 1), 1:m), 1:m))
-    E = [ENA(observation.y, i, observation.a - n + 1) for i =1:m]
+    M = reduce(hcat, map(i ->  map(j -> ENT(observation.y, i, j, observation.a - m), 1:m), 1:m))
+    E = [ENA(observation.y, i, observation.a - m) for i =1:m]
     N = reshape(sum(M, dims = 2), (m,1)) + E    
     return MAPHSufficientStats(B, Z, M ,E, N)
 end
