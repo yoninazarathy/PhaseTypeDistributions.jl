@@ -77,6 +77,8 @@ function MAPHDist(α::Matrix{<:Real}, T:: Matrix{<:Real}, D::Matrix{<:Real})
     return MAPHDist(α, T, D, q, R, U)
 end
 
+#QQQQ maybe alpha should be a vector in the constructors...
+
 function MAPHDist(α::Matrix{<:Real}, q::Vector{<:Real}, R::Matrix{<:Real}, U::Matrix{<:Real})
     T, D = T_D_from_R_U_q(R, U ,q)
     return MAPHDist(α, T, D, q, R, U)

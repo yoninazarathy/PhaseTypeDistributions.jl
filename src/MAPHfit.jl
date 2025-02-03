@@ -21,18 +21,21 @@ function M_step!(data_length::Int, stats::Vector{MAPHSufficientStats}, sum_stats
     maph.α = reshape(new_α, (1,m)) 
 
     #QQQQQ "project" U step as part of the "M step"
+    if !satisfies_constraint_U(new_R, new_U)
+        new_U = project_U_step(R, U)
+        #QQQQQ logging that we did a projection 
+    end
 
-    return MAPHDist(new_α, new_R, new_U)
+    return MAPHDist(new_α, new_q, new_R, new_U)
 
 end
 
-function enforce_constraint_step(R::Matrix, target_U::Matrix)
+function project_U_step(R::Matrix, target_U::Matrix)
     m, n = size(R)
 
     model = Model(HiGHS.Optimizer)
 
     @variable(model, u[i=1:m, j = 1:m] >= 0)
-
     @variable(model, d[i=1:m, j =1:m] >= 0)
     
     @constraint(model, [i=1:m, j = 1:m], d[i,j] >= u[i,j] - target_U[i,j])
@@ -42,8 +45,9 @@ function enforce_constraint_step(R::Matrix, target_U::Matrix)
     @objective(model, Min, sum(d[i,j] for i in 1:m, j in 1:m))
     optimize!(model)
 
-
-    
+    #QQQQQ get u out of the model and reshape it in U
+    U = target_U #QQQQ replace this 
+    return U
 end
 
 
