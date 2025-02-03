@@ -29,6 +29,9 @@ struct MAPHDist
         @assert length(α) == size(T, 1) "The length of α must be equal to the number of rows in T"
         @assert size(D) == size(R) "prob and rate matrix must have the same dimension"
         @assert sum(α) == 1 "initial prob must sum to 1"
+        @assert sum(R, dims = 2) .≈ 1.0
+        @assert sum(T, dims = 2) +  sum(D, dims = 2) .≈ 0.0
+        @assert satisfies_constraint_U(R, U)
         return new(α, T, D, q, R, U)
 end
 
@@ -77,4 +80,15 @@ end
 function MAPHDist(α::Matrix{<:Real}, q::Vector{<:Real}, R::Matrix{<:Real}, U::Matrix{<:Real})
     T, D = T_D_from_R_U_q(R, U ,q)
     return MAPHDist(α, T, D, q, R, U)
+end
+
+
+function satisfies_constraint_U(R::Matrix, U::Matrix)
+    m, n = size(R)
+    for i in 1:m, k in 1:n
+        lhs = sum((R[j, k] / R[j, 1]) * U[i, j] for j in 1:m)
+        rhs = R[i, k] / R[i, 1]
+        (lhs > rhs) && (return false)
+    end
+    return true
 end

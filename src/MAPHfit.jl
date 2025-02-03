@@ -20,6 +20,8 @@ function M_step!(data_length::Int, stats::Vector{MAPHSufficientStats}, sum_stats
     @assert all(new_q .≥ 0)  "we have $new_q"
     maph.α = reshape(new_α, (1,m)) 
 
+    #QQQQQ "project" U step as part of the "M step"
+
     return MAPHDist(new_α, new_R, new_U)
 
 end
