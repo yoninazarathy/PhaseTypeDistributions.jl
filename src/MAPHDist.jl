@@ -36,10 +36,28 @@ struct MAPHDist
     end
 end
 
+function MAPHDist(α::Vector{<:Real}, T:: Matrix{<:Real}, D::Matrix{<:Real})
+    q, R, U = if is_degenerate_maph(T)
+        valid_states = abs.(diag(T)) .> sqrt(eps())
+        new_α = α[:, valid_states]
+        new_T = T[valid_states, valid_states]
+        new_D = D[valid_states, valid_states]
+        R_U_from_T_D(new_T, new_D)
+    else
+        R_U_from_T_D(T, D)
+    end    
+
+    return MAPHDist(α, T, D, q, R, U)
+end
+
+function MAPHDist(α::Vector{<:Real}, q::Vector{<:Real}, R::Matrix{<:Real}, U::Matrix{<:Real})
+    T, D = T_D_from_R_U_q(q, R, U)
+    return MAPHDist(α, T, D, q, R, U)
+end
+
 function is_degenerate_maph(T::Matrix{<:Real})
     return !all(abs.(diag(T)) .> sqrt(eps()))
 end
-
 
 function R_U_from_T_D(T::Matrix{<:Real}, D::Matrix{<:Real})
     m, _  = size(D)
@@ -62,25 +80,6 @@ function T_D_from_R_U_q(q::Vector{<:Real}, R::Matrix{<:Real}, U::Matrix{<:Real})
     D = -T * R
 
     return T, D
-end
-
-function MAPHDist(α::Vector{<:Real}, T:: Matrix{<:Real}, D::Matrix{<:Real})
-    q, R, U = if is_degenerate_maph(T)
-        valid_states = abs.(diag(T)) .> sqrt(eps())
-        new_α = α[:, valid_states]
-        new_T = T[valid_states, valid_states]
-        new_D = D[valid_states, valid_states]
-        R_U_from_T_D(new_T, new_D)
-    else
-        R_U_from_T_D(T, D)
-    end    
-
-    return MAPHDist(α, T, D, q, R, U)
-end
-
-function MAPHDist(α::Vector{<:Real}, q::Vector{<:Real}, R::Matrix{<:Real}, U::Matrix{<:Real})
-    T, D = T_D_from_R_U_q(q, R, U)
-    return MAPHDist(α, T, D, q, R, U)
 end
 
 function satisfies_constraint_U(R::Matrix, U::Matrix)
