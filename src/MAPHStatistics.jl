@@ -92,8 +92,12 @@ struct MAPHSufficientStats
     E::Vector{<:Real} 
 
     "total number of transitions leaving state i"
-    N::Matrix{<:Real}
+    N::Vector{<:Real}
 
+    function MAPHSufficientStats(B::Vector{<:Real} , Z::Vector{<:Real} , M::Matrix{<:Real} , E::Vector{<:Real} , N::Vector{<:Real})
+        @assert all(Z .>= 0.0)
+        return new(B, Z, M, E, N)
+    end
 end
 
 
@@ -105,33 +109,32 @@ end
 *(n::Real, ss::MAPHSufficientStats) = MAPHSufficientStats(ss.B *n, ss.Z*n, ss.M*n, ss.E*n, ss.N*n)
 
 function very_crude_c_solver(y::Real, i::Int, j::Int, k::Int, maph::MAPHDist)
-    max(quadgk(u -> (maph.α * exp(maph.T*u))[i] * (exp(maph.T*(y-u))*maph.D[:,k])[j] , 0, y, rtol=1e-3) |> first, 0)
+    max(quadgk(u -> (maph.α' * exp(maph.T*u))[i] * (exp(maph.T*(y-u))*maph.D[:,k])[j] , 0, y, rtol=1e-3) |> first, 0)
 end
+
 
 function compute_sufficient_stats(observation::SingleObservation, 
                             maph::MAPHDist; 
                             c_solver = very_crude_c_solver)
 
     m, n = model_size(maph)
-    a(y::Real) = maph.α * exp(maph.T*y)
+    a(y::Real) = maph.α' * exp(maph.T*y)
     b(y::Real, k::Int) = exp(maph.T*y) * maph.D[:,k]
     c(y::Real, i::Int, j::Int, k::Int) = very_crude_c_solver(y, i, j, k, maph)
 
     non_degenerate_condtion(y::Real, k::Int) = (sum(b(y,k)) != 0)
-    EB(y::Real, i::Int, k::Int) = non_degenerate_condtion(y, k) ? (maph.α[i] * b(y, k)[i] / reduce(vcat, (maph.α * b(y, k)))) : maph.α[i]
-    EZ(y::Real, i::Int, k::Int) = non_degenerate_condtion(y, k) ? c(y, i, i, k) / reduce(vcat, (maph.α * b(y,k))) : 0
-    ENT_non_diagonal(y::Real, i::Int, j::Int, k::Int) = non_degenerate_condtion(y,k) ? maph.T[i,j] .* c(y, i, j, k) / reduce(vcat, (maph.α * b(y,k))) : 0
+    EB(y::Real, i::Int, k::Int) = non_degenerate_condtion(y, k) ? (maph.α[i] * b(y, k)[i] / reduce(vcat, (maph.α' * b(y, k)))) : maph.α[i]
+    EZ(y::Real, i::Int, k::Int) = non_degenerate_condtion(y, k) ? c(y, i, i, k) / reduce(vcat, (maph.α' * b(y,k))) : 0
+    ENT_non_diagonal(y::Real, i::Int, j::Int, k::Int) = non_degenerate_condtion(y,k) ? maph.T[i,j] .* c(y, i, j, k) / reduce(vcat, (maph.α' * b(y,k))) : 0
     ENT(y::Real, i::Int, j::Int, k::Int) = i != j ?  ENT_non_diagonal(y::Real, i::Int, j::Int, k::Int) : 0
-    # ENA(y::Real, i::Int, j::Int, k::Int) = j == k ? a(y)[i] * maph.D[i,k] / reduce(vcat, (maph.α * b(y,k))) : 0 
-
-    ENA(y::Real, i::Int, k::Int) =  non_degenerate_condtion(y,k) ? a(y)[i] * maph.D[i,k] / reduce(vcat, (maph.α * b(y,k))) : 0.0
+    ENA(y::Real, i::Int, k::Int) =  non_degenerate_condtion(y,k) ? a(y)[i] * maph.D[i,k] / reduce(vcat, (maph.α' * b(y,k))) : 0.0
     
     B = map(i -> EB(observation.y, i, observation.a - m), 1:m)
-    @time Z = map(i -> EZ(observation.y, i, observation.a - m), 1:m)
-
+    Z = map(i -> EZ(observation.y, i, observation.a - m), 1:m)
     M = reduce(hcat, map(i ->  map(j -> ENT(observation.y, i, j, observation.a - m), 1:m), 1:m))
     E = [ENA(observation.y, i, observation.a - m) for i =1:m]
-    N = reshape(sum(M, dims = 2), (m,1)) + E    
+    N = vec(sum(M, dims = 2)) + E    
+
     return MAPHSufficientStats(B, Z, M ,E, N)
 end
 

@@ -4,7 +4,7 @@ The mutable struct which representing the MAPH distribution in different paramet
 """
 struct MAPHDist 
     """m × 1 Initial probability distribution across the phases. Elements should sum to 1"""
-    α::Matrix{<:Real}
+    α::Vector{<:Real}
 
     """m x m transition rate matrix for the MAPH states"""    
     T::Matrix{<:Real}
@@ -21,18 +21,19 @@ struct MAPHDist
     """Vector of n copies of m x m matrices, representing the transition probabilities between the MAPH states given absorbing states."""
     U::Matrix{<:Real}
 
-    function MAPHDist(α::Matrix{<:Real}, T::Matrix{<:Real}, D::Matrix{<:Real}, q::Vector{<:Real}, R::Matrix{<:Real}, U::Matrix{<:Real})
-        @assert size(α, 2) == size(T,1) "must have the same num of phases"
+    function MAPHDist(α::Vector{<:Real}, T::Matrix{<:Real}, D::Matrix{<:Real}, q::Vector{<:Real}, R::Matrix{<:Real}, U::Matrix{<:Real})
+        @assert length(α) == size(T,1) "must have the same num of phases"
         @assert size(T, 1) == size(T, 2) "T must be a square matrix"
         @assert size(q, 1) == size(T,1) "q must be the same length as the number of rows in T"
         @assert size(D, 1) == size(T, 1) "T0 must be a mxn matrix"
         @assert length(α) == size(T, 1) "The length of α must be equal to the number of rows in T"
         @assert size(D) == size(R) "prob and rate matrix must have the same dimension"
         @assert sum(α) == 1 "initial prob must sum to 1"
-        @assert sum(R, dims = 2) .≈ 1.0
-        @assert sum(T, dims = 2) +  sum(D, dims = 2) .≈ 0.0
+        @assert all(isapprox.(sum(R, dims = 2) , 1.0; atol = 1e-3))
+        @assert all(isapprox.((sum(T, dims = 2) + sum(D, dims = 2)) , 0.0; atol = 1e-3 ))
         @assert satisfies_constraint_U(R, U)
         return new(α, T, D, q, R, U)
+    end
 end
 
 function is_degenerate_maph(T::Matrix{<:Real})
@@ -45,7 +46,7 @@ function R_U_from_T_D(T::Matrix{<:Real}, D::Matrix{<:Real})
     q = -diag(T)
     R = -inv(T)*D
     k = 1
-    P = [i != j ? -T[i,j] * R[j,k] / T[i,i] / R[i,k] : 0.0 for i in 1:m, j in 1:m]
+    U = [i != j ? -T[i,j] * R[j,k] / T[i,i] / R[i,k] : 0.0 for i in 1:m, j in 1:m]
 
     return q, R, U
 end
@@ -63,7 +64,7 @@ function T_D_from_R_U_q(q::Vector{<:Real}, R::Matrix{<:Real}, U::Matrix{<:Real})
     return T, D
 end
 
-function MAPHDist(α::Matrix{<:Real}, T:: Matrix{<:Real}, D::Matrix{<:Real})
+function MAPHDist(α::Vector{<:Real}, T:: Matrix{<:Real}, D::Matrix{<:Real})
     q, R, U = if is_degenerate_maph(T)
         valid_states = abs.(diag(T)) .> sqrt(eps())
         new_α = α[:, valid_states]
@@ -77,13 +78,10 @@ function MAPHDist(α::Matrix{<:Real}, T:: Matrix{<:Real}, D::Matrix{<:Real})
     return MAPHDist(α, T, D, q, R, U)
 end
 
-#QQQQ maybe alpha should be a vector in the constructors...
-
-function MAPHDist(α::Matrix{<:Real}, q::Vector{<:Real}, R::Matrix{<:Real}, U::Matrix{<:Real})
-    T, D = T_D_from_R_U_q(R, U ,q)
+function MAPHDist(α::Vector{<:Real}, q::Vector{<:Real}, R::Matrix{<:Real}, U::Matrix{<:Real})
+    T, D = T_D_from_R_U_q(q, R, U)
     return MAPHDist(α, T, D, q, R, U)
 end
-
 
 function satisfies_constraint_U(R::Matrix, U::Matrix)
     m, n = size(R)
@@ -93,4 +91,8 @@ function satisfies_constraint_U(R::Matrix, U::Matrix)
         (lhs > rhs) && (return false)
     end
     return true
+end
+
+function Base.isapprox(maph1::MAPHDist, maph2::MAPHDist)
+    return isapprox(maph1.α, maph2.α) && isapprox(maph1.T, maph2.T)&& isapprox(maph1.D, maph2.D)&& isapprox(maph1.q, maph2.q)&& isapprox(maph1.R, maph2.R) && isapprox(maph1.U, maph2.U)
 end
