@@ -1,32 +1,37 @@
 function E_step(all_obs::Vector{SingleObservation}, maph::MAPHDist)
-    data_length, sorted_stats = compute_sorted_stats(all_obs, maph)
+    data_dict = data_filter(all_obs)
+    data_length = length(reduce(vcat,values(data_dict)))
+    stats_dict = Dict{Int, Any}()
 
-    sum_stats_per_state = map(ss -> sum(ss), sorted_stats)
-    @show sum_stats_per_state
-    total_stats = sum(sum_stats_per_state)
-
-    return data_length, sum_stats_per_state, total_stats
-end
-
-function M_step(data_length::Int, stats::Vector{MAPHSufficientStats}, sum_stats::MAPHSufficientStats, maph::MAPHDist)
-    m, n = model_size(maph)
-    number_times_exit = [sum_stats.N[i] + sum(sum_stats.M[i,:]) for i ∈ 1:m]
-    number_times_exit_per_state = [[stats[k].N[i] + sum(stats[k].M[i, :]) for i ∈ 1:m] for k ∈ 1:n]
-    new_α =  sum_stats.B ./data_length
-    new_q = [number_times_exit[i] / sum_stats.Z[i] for i ∈ 1:m]
-    new_R = [stats[k].B[i] / sum_stats.B[i] for i = 1:m, k = 1:n]
-    new_U = [stats[1].M[i,j] / number_times_exit_per_state[1][i] for i ∈ 1:m, j ∈ 1:m ]
-    @assert sum(new_α) ≈ 1.0
-    @assert sum(new_α .* new_ρ) ≈ 1.0
-    @assert all(new_q .≥ 0)  "we have $new_q"
-    maph.α = reshape(new_α, (1,m)) 
-
-    if !satisfies_constraint_U(new_R, new_U)
-        @info "we are going to project a new U matrix here since the fitted one does not statisfy the constraint"
-        new_U = project_U_step(R, U)
+    for k in keys(data_dict)
+        stats_dict[k] = sum(compute_sufficient_stats.(data_dict[k], Ref(maph)))
     end
 
-    return MAPHDist(new_α, new_q, new_R, new_U)
+    total_stats = sum(reduce(vcat, values(stats_dict)))
+
+    emprical_prob_dict = get_emperical_absorb_prob(all_obs)
+    highest_prob_state = argmax(emprical_prob_dict)
+
+    return data_length, stats_dict, total_stats, highest_prob_state
+end
+
+function M_step(data_length::Int, stats::Dict{Int, Any}, sum_stats::MAPHSufficientStats, highest_prob_state::Int,  maph::MAPHDist)
+    m, n = model_size(maph)
+    absorbing_states = sort(collect(keys(stats)))
+    @assert length(absorbing_states) == n "we dont have enough data!"
+    number_times_exit = [sum_stats.N[i] for i ∈ 1:m]
+    number_times_exit_per_state = [[stats[k].N[i]  for i ∈ 1:m] for k ∈ absorbing_states]
+    α_est =  sum_stats.B ./data_length
+    q_est = [number_times_exit[i] / sum_stats.Z[i] for i ∈ 1:m]
+    R_est = [stats[k].B[i] / sum_stats.B[i] for i ∈ 1:m, k ∈ absorbing_states]
+    U_est = stats[highest_prob_state].M ./ stats[highest_prob_state].N 
+
+    if !satisfies_constraint_U(R_est, U_est)
+        @info "we are going to project a new U matrix here since the fitted one does not statisfy the constraint"
+        U_est = project_U_step(R_est, U_est)
+    end
+
+    return MAPHDist(α_est, q_est, R_est, U_est)
 
 end
 
@@ -73,11 +78,13 @@ function project_U_step(R::Matrix, target_U::Matrix)
 end
 
 
-function EM_fit(all_obs::Vector{SingleObservation}, maph::MAPHDist, iterations::Int = 20)
-    maph_out = maph
-    for _ ∈ 1:iterations
-        @time data_length, stats, s_stats = E_step(all_obs, maph)
-        @time maph_out = M_step(data_length, stats, s_stats, maph)
+function EM_fit(all_obs::Vector{SingleObservation}, maph::MAPHDist, iterations::Int = 150)
+    maph_out = deepcopy(maph)
+    means = []
+    for k ∈ 1:iterations
+        @time data_length, stats, s_stats, highest_prob_state = E_step(all_obs, maph_out)
+        @time maph_out = M_step(data_length, stats, s_stats, highest_prob_state, maph_out)
+        push!(means, mean(maph_out))
     end
     return maph_out
 end

@@ -7,7 +7,7 @@ using LinearAlgebra
 Random.seed!(2)
 
 # include("MAPHDist.jl")
-# include("MAPHStatistics.jl")
-include("MAPHfit.jl")
+include("MAPHStatistics.jl")
+#include("MAPHfit.jl")
 
 

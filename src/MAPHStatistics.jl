@@ -134,41 +134,46 @@ function compute_sufficient_stats(observation::SingleObservation,
     M = reduce(hcat, map(i ->  map(j -> ENT(observation.y, i, j, observation.a - m), 1:m), 1:m))
     E = [ENA(observation.y, i, observation.a - m) for i =1:m]
     N = vec(sum(M, dims = 2)) + E    
-
     return MAPHSufficientStats(B, Z, M ,E, N)
 end
 
 
-function data_filter(all_obs::Vector{SingleObservation}, lower_quantile = 0.01, upper_quantile = 0.99)
+function data_filter(all_obs::Vector{SingleObservation}, lower_quantile = 0.05, upper_quantile = 0.95; censoring::Bool = false)
     all_absorbing_states = map(obs -> obs.a, all_obs)
     all_absorbing_times = map(obs -> obs.y, all_obs)
-    min_time = quantile(all_absorbing_times, lower_quantile)
-    max_time = quantile(all_absorbing_times, upper_quantile)
 
-    #filter out those ones with abnormal time
-    filtered_obs = filter(obs -> (min_time < obs.y < max_time),  all_obs)
+    all_obs = if censoring
+            min_time = quantile(all_absorbing_times, lower_quantile)
+            max_time = quantile(all_absorbing_times, upper_quantile)
 
-    filtered_data_length = length(reduce(vcat, filtered_obs))
-
+            #filter out those ones with abnormal time
+            filtered_obs = filter(obs -> (min_time < obs.y < max_time),  all_obs)
+    else
+        all_obs
+    end
     unique_absorbing_state = sort(unique(all_absorbing_states))
-    # @show unique_absorbing_state
-    #sort the obs data to different absorb states
-    data_sorted_by_states = map(k-> filter(obs -> obs.a == k, filtered_obs), unique_absorbing_state)
 
-    return filtered_data_length, data_sorted_by_states
+    data_dict = Dict{Int, Any}()
+    for k in unique_absorbing_state
+        data = filter(obs -> obs.a == k, all_obs)
+        @assert !isempty(data) "Boom we have no observation in the absorbing state $k"
+        data_dict[k] = data
+    end
+
+    return data_dict
 
 end
 
 
 function get_emperical_absorb_prob(all_obs::Vector{SingleObservation})
-    data_length, data = data_filter(all_obs)
-    absorb_probs= map(dat -> length(reduce(vcat, dat))/ data_length, data)
-    prob_per_state = Dict()
-    for k ∈ eachindex(data)
-        prob_per_state[data[k][1].a] = absorb_probs[k]
+    data_dict = data_filter(all_obs)
+    num_ob = length(reduce(vcat, values(data_dict)))
+    emprical_prob_dict = Dict{Int, Any}()
+    for k in keys(data_dict)
+        emprical_prob_dict[k] = length(data_dict[k]) / num_ob 
     end
 
-    return prob_per_state
+    return emprical_prob_dict
 end
 
 
@@ -189,11 +194,5 @@ function get_emperical_statistics(all_obs::Vector{SingleObservation},  ω::Real)
 
 end
 
-function compute_sorted_stats(all_obs::Vector{SingleObservation}, maph::MAPHDist)
-    data_length, data_sorted_by_states = data_filter(all_obs)
-    stats_by_different_states = map(data_by_absorb_state -> compute_sufficient_stats.(data_by_absorb_state, Ref(maph)), data_sorted_by_states)
-
-    return data_length, stats_by_different_states
-end
 
 

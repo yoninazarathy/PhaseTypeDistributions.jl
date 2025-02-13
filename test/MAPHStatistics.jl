@@ -6,17 +6,23 @@ D = [μ41 μ42 μ43; μ51 μ52 μ53]
 
 maph = MAPHDist(α, T, D)
 single_ob = rand(maph)
-@show compute_sufficient_stats(single_ob, maph)
 
-all_obs = [rand(maph) for _ in 1:10]
-@show MAPHDistributions.compute_sorted_stats( all_obs, maph)
+# @show MAPHDistributions.compute_sufficient_stats(single_ob, maph)
+all_obs = [rand(maph) for _ in 1:1000]
+# @show MAPHDistributions.data_filter(all_obs)
 
-# a(maph::MAPHDist, y::Real) = maph.α' * exp(maph.T*y)
-# b(maph::MAPHDist, y::Real, k::Int) = exp(maph.T*y) * maph.D[:,k]
-# c(maph::MAPHDist, y::Real, i::Int, j::Int, k::Int) = very_crude_c_solver(y, i, j, k, maph)
+# data_length, stats_dict, total_stats, highest_prob_state = MAPHDistributions.E_step(all_obs, maph)
 
-# @show a(maph, 0.5)
+# @show total_stats
 
-# @show b(maph, 0.5, 1)
+# @show MAPHDistributions.M_step(data_length, stats_dict, total_stats, highest_prob_state,  maph)
 
-# @show c(maph, 0.5, 1,1 ,1 )
+maph_new = MAPHDistributions.EM_fit(all_obs, maph)
+@show mean(maph_new)
+@show mean(maph)
+# @show maph_new
+# maph_new = MAPHDist([0.44377420920253696, 0.5562257907974631], [-16.57111742766177 14.445195231489837; 1.5737259906465026 -17.565226110195773], [2.1259221961719352 -5.329070518200751e-15; 0.5376222958710618 15.45387782367821], [16.57111742766177, 17.565226110195773], [0.16809986737663468 0.8319001326233653; 0.04566781100075241 0.9543321889992475], [0.0 0.23681785613801207; 0.32978625315812626 0.0])
+
+
+# ob = SingleObservation(5, 0.0011776386581249302, Real[0.0011776386581249302], [1, 5])
+# @show MAPHDistributions.compute_sufficient_stats(ob, maph_new)
