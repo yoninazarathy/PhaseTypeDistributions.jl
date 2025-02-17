@@ -78,12 +78,13 @@ function project_U_step(R::Matrix, target_U::Matrix)
 end
 
 
-function EM_fit(all_obs::Vector{SingleObservation}, maph::MAPHDist, iterations::Int = 150)
+function EM_fit(all_obs::Vector{SingleObservation}, maph::MAPHDist, iterations::Int = 300)
     maph_out = deepcopy(maph)
     means = []
     for k ∈ 1:iterations
         @time data_length, stats, s_stats, highest_prob_state = E_step(all_obs, maph_out)
         @time maph_out = M_step(data_length, stats, s_stats, highest_prob_state, maph_out)
+        @show mean(maph_out)
         push!(means, mean(maph_out))
     end
     return maph_out

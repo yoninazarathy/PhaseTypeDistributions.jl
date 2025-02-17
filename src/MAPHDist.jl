@@ -30,7 +30,10 @@ struct MAPHDist
         @assert size(D) == size(R) "prob and rate matrix must have the same dimension"
         @assert isapprox(sum(α), 1.0) "initial prob must sum to 1"
         @assert all(isapprox.(sum(R, dims = 2) , 1.0; atol = 1e-3))
-        @assert all(isapprox.((sum(T, dims = 2) + sum(D, dims = 2)) , 0.0; atol = 1e-3 ))
+        if !all(isapprox.((sum(T, dims = 2) + sum(D, dims = 2)) , 0.0; atol = 1e-3 ))
+            @show (sum(T, dims = 2) + sum(D, dims = 2))
+            @assert false
+        end
         @assert satisfies_constraint_U(R, U)
         return new(α, T, D, q, R, U)
     end

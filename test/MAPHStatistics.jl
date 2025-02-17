@@ -1,14 +1,29 @@
-Λ₄, λ45, λ54, Λ₅ = 15.0, 5.0, 7.0, 16.0
-μ41, μ42, μ43, μ51, μ52, μ53 = 4.0, 3.0, 3.0, 1.0, 7.0, 1.0 
-T = [-Λ₄ λ45; λ54 -Λ₅]
-D = [μ41 μ42 μ43; μ51 μ52 μ53]
-α = [0.5, 0.5]
+using Random
+Random.seed!(0)
 
-maph = MAPHDist(α, T, D)
-single_ob = rand(maph)
+# Λ₄, λ45, λ54, Λ₅ = 15.0, 5.0, 7.0, 16.0
+# μ41, μ42, μ43, μ51, μ52, μ53 = 4.0, 3.0, 3.0, 1.0, 7.0, 1.0 
+# T = [-Λ₄ λ45; λ54 -Λ₅]
+# D = [μ41 μ42 μ43; μ51 μ52 μ53]
+# α = [0.5, 0.5]
+
+T = [-16.5 0.5 0.0 1.0;
+     2.6 -7.8 0.6 2.6;
+     12.3 2.9 -20.8 1.6;
+     11.2 0.1 2.7  -20]
+
+D = [12.0 1.0 2.0;
+     0.9 0.1 1.0;
+     2.9 0.1 1.0;
+     2.9 0.1 3.0]
+    
+α = [0.75, 0.05, 0.15, 0.05]
+
+ground_truth_maph = MAPHDist(α, T, D)
+# single_ob = rand(maph)
 
 # @show MAPHDistributions.compute_sufficient_stats(single_ob, maph)
-all_obs = [rand(maph) for _ in 1:1000]
+all_obs = [rand(ground_truth_maph) for _ in 1:3000]
 # @show MAPHDistributions.data_filter(all_obs)
 
 # data_length, stats_dict, total_stats, highest_prob_state = MAPHDistributions.E_step(all_obs, maph)
@@ -17,7 +32,14 @@ all_obs = [rand(maph) for _ in 1:1000]
 
 # @show MAPHDistributions.M_step(data_length, stats_dict, total_stats, highest_prob_state,  maph)
 
-maph_new = MAPHDistributions.EM_fit(all_obs, maph)
+
+T = T + [-0.1 0.1; 0.3 -0.3];
+D = D
+α = [0.4, 0.6]
+
+init_maph = MAPHDist(α, T, D)
+
+maph_new = MAPHDistributions.EM_fit(all_obs, init_maph)
 @show mean(maph_new)
 @show mean(maph)
 # @show maph_new

@@ -3,7 +3,7 @@ model_size(maph::MAPHDist) = (m = size(maph.T, 1), n = size(maph.D, 2)) #transie
 
 
 absorption_probs(maph::MAPHDist) = maph.α' *maph.R
-kth_moment(maph::MAPHDist, k::Real) = (-1.0)^(k+1) * factorial(k) .* maph.α' * inv(maph.T)^(k+1) * maph.D ./ absorption_probs(maph)
+kth_moment(maph::MAPHDist, k::Real) = (-1.0)^(k+1) * factorial(k) .* maph.α' * inv(maph.T)^(k) * maph.D ./ absorption_probs(maph)
 mean(maph::MAPHDist) = kth_moment(maph, 1)
 var(maph::MAPHDist) = kth_moment(maph, 2) - mean(maph).^2
 scv(maph::MAPHDist) = var(maph) ./ (mean(maph).^2) 
