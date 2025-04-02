@@ -5,22 +5,16 @@ Defines a coninutous time markov chain
 """
 struct ContinuousTimeMarkovChain
     "the transient states"
-    transient_states:: Vector{Int}
+    transient_states::Vector{Int}
 
     "the absorbing states"
-    absorbing_states:: Vector{Int}
-
-    "transient probabilities"
-    P_λ ::Matrix{<:Real}
-
-    "absorbing probabilities"
-    P_μ:: Matrix{<:Real}
+    absorbing_states::Vector{Int}
 
     "jumping chain"
-    P_jump :: Matrix{<:Real}
+    P_jump::Matrix{<:Real}
 
     "diagonal rate"
-    Λ:: Vector{<:Real}
+    Λ::Vector{<:Real}
 
 end
 
@@ -29,12 +23,12 @@ function MAPH_TO_CTMC(maph::MAPHDist)
     transient_states = 1:m
     absorbing_states = (m+1):(m+n)
     P_λ = I - inv(Diagonal(maph.T))*maph.T
-    P_μ = maph.R
+    P_μ = -inv(Diagonal(maph.T))*maph.D
     P1 = hcat(P_λ, P_μ)
     P2 = hcat(zeros(n,m), Matrix(Diagonal(ones(n))))
-    P_jump =[P1; P2]
+    P_jump = [P1; P2]
     Λ = vcat(-diag(maph.T), zeros(n))
-    return ContinuousTimeMarkovChain(transient_states, absorbing_states, P_λ, P_μ, P_jump, Λ)
+    return ContinuousTimeMarkovChain(transient_states, absorbing_states, P_jump, Λ)
 end
 
 struct SingleObservation
